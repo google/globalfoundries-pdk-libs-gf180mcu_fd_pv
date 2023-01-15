@@ -9,7 +9,7 @@ This includes:
 
  * DRC deck
  * LVS deck
- * RC extraction deck (Future)
+ * RC extraction (Future)
 
  Currently it supports;
 
@@ -17,6 +17,8 @@ This includes:
      - Klayout
      - Magic
   * For LVS:
+     - Klayout
+  * For RC extraction (Future):
      - Klayout
 
 License
