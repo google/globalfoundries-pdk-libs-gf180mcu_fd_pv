@@ -35,9 +35,7 @@ jobs:
           cache: "pip"
       - name: Install dependencies
         run: |
-          pip install .
           pip install flake8 pytest pytest_regressions
-          pip install -e .
       - name: Lint with flake8
         run: |
           flake8 .
