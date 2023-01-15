@@ -1,0 +1,56 @@
+# Copyright 2022 GlobalFoundries PDK Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: regression testing
+
+# Prevent keeping resources busy when a branch/PR is updated
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  DOCKER_BUILDKIT: 1
+  IMAGE: ghcr.io/mabrains/pdk_regression
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { tool: klayout, pdk: drc, test: main }
+          - { tool: klayout, pdk: drc, test: switch }
+          - { tool: klayout, pdk: lvs, test: main }
+          - { tool: klayout, pdk: lvs, test: switch }
+
+    name: ${{ matrix.pdk }} | ${{ matrix.test }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker pull "$IMAGE"
+      - name: Testing ${{ matrix.type }} for ${{ matrix.test }}
+        run: >
+          docker run --rm
+          -v $(pwd):/wrk -w /wrk/${{ matrix.tool }}/${{ matrix.pdk }}/testing
+          -e PDK_ROOT="/wrk/${{ matrix.tool }}"
+          -e PDK='${{ matrix.pdk }}'
+          "$IMAGE"
+          make test-"$(python -c 'print("${{ matrix.pdk }}".upper())')"-${{ matrix.test }}
