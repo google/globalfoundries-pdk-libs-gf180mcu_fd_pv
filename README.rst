@@ -5,18 +5,19 @@ This repository contains the "physical verification" library implementation as
 part of
 `Google's open source PDK for GlobalFoundries 180nm MCU process node <https://github.com/google/gf180mcu-pdk>`_.
 
-This includes;
+This includes:
 
  * DRC deck
  * LVS deck
+ * RC extraction deck (Future)
 
  Currently it supports;
 
   * For DRC:
-     - KLayout
+     - Klayout
      - Magic
   * For LVS:
-     - ???
+     - Klayout
 
 License
 =======
