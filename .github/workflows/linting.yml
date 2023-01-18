@@ -27,6 +27,6 @@ jobs:
       - name: Lint with flake8
         run: |
           sudo apt install tree
-          git submodule update --recursive
+          git submodule update --init --recursive
           tree .
           make lint
