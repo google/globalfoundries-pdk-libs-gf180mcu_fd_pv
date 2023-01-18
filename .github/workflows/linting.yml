@@ -30,5 +30,7 @@ jobs:
           activate-environment: ""
       - name: Lint with flake8
         run: |
+          apt install tree
+          tree .
           git submodule update --recursive
           make lint
