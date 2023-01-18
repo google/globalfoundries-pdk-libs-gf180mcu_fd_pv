@@ -24,10 +24,6 @@ jobs:
       max-parallel: 12
     steps:
       - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-activate-base: true
-          activate-environment: ""
       - name: Lint with flake8
         run: |
           apt install tree
