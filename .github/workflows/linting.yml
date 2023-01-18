@@ -16,6 +16,7 @@ name: Code Linting
 on:
   pull_request:
   push:
+  workflow_dispatch:
 
 jobs:
   test_code:

@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  push:
   pull_request:
   workflow_dispatch:
 
