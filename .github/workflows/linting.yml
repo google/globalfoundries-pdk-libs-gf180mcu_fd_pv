@@ -19,23 +19,16 @@ on:
 
 jobs:
   test_code:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       max-parallel: 12
-      matrix:
-        python-version: ["3.10"]
-        os: [ubuntu-latest]
-
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-      - name: Install dependencies
-        run: |
-          pip install flake8 pytest pytest_regressions
+          auto-activate-base: true
+          activate-environment: ""
       - name: Lint with flake8
         run: |
-          flake8 .
+          make lint
+          

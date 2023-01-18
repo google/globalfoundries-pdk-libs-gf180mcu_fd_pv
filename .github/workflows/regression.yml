@@ -24,11 +24,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  GITHUB_TOKEN: ${{ github.token }}
-  DOCKER_BUILDKIT: 1
-  IMAGE: ghcr.io/mabrains/pdk_regression
-
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -36,21 +31,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { tool: klayout, pdk: drc, test: main }
-          - { tool: klayout, pdk: drc, test: switch }
-          - { tool: klayout, pdk: lvs, test: main }
-          - { tool: klayout, pdk: lvs, test: switch }
+          - { tool: klayout, part: drc, test: main }
+          - { tool: klayout, part: drc, test: switch }
+          - { tool: klayout, part: lvs, test: main }
+          - { tool: klayout, part: lvs, test: switch }
 
-    name: ${{ matrix.pdk }} | ${{ matrix.test }}
+    name: ${{ matrix.part }} | ${{ matrix.test }}
 
     steps:
       - uses: actions/checkout@v3
-      - run: docker pull "$IMAGE"
-      - name: Testing ${{ matrix.type }} for ${{ matrix.test }}
+      - name: Testing ${{ matrix.part }} for ${{ matrix.test }}
         run: >
-          docker run --rm
-          -v $(pwd):/wrk -w /wrk/${{ matrix.tool }}/${{ matrix.pdk }}/testing
-          -e PDK_ROOT="/wrk/${{ matrix.tool }}"
-          -e PDK='${{ matrix.pdk }}'
-          "$IMAGE"
-          make test-"$(python -c 'print("${{ matrix.pdk }}".upper())')"-${{ matrix.test }}
+          make test-"$(python -c 'print("${{ matrix.part }}".upper())')"-${{ matrix.test }}
