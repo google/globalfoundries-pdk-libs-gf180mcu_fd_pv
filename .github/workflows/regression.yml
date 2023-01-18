@@ -42,4 +42,5 @@ jobs:
       - uses: actions/checkout@v3
       - name: Testing ${{ matrix.part }} for ${{ matrix.test }}
         run: >
+          git submodule update --recursive
           make test-"$(python -c 'print("${{ matrix.part }}".upper())')"-${{ matrix.test }}
