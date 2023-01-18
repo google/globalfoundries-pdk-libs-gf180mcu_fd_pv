@@ -45,3 +45,6 @@ dependencies:
   - xz=5.2.10=h5eee18b_0
   - yaml=0.2.5=h7b6447c_0
   - zlib=1.2.13=h5eee18b_0
+  - pip
+  - pip:
+    - -r requirements.txt
