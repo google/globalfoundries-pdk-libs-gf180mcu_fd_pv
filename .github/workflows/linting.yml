@@ -25,7 +25,8 @@ jobs:
       max-parallel: 12
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - name: Lint with flake8
         run: |
-          git submodule update --init --recursive
           make lint

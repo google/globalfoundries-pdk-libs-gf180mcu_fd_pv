@@ -41,7 +41,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - name: Testing ${{ matrix.part }} for ${{ matrix.test }}
         run: |
-          git submodule update --init --recursive
           make test-"$(python -c 'print("${{ matrix.part }}".upper())')"-${{ matrix.test }}
