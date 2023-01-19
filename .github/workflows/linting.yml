@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Code Linting
+name: code linting
 on:
   pull_request:
   push:
   workflow_dispatch:
 
 jobs:
-  test_code:
+  lint_python:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 12
