@@ -40,13 +40,11 @@ lint: | $(CONDA_ENV_PYTHON)
 .ONESHELL:
 test-DRC-main : | $(CONDA_ENV_PYTHON) 
 	@$(IN_CONDA_ENV) python3 $(KLAYOUT_TESTS)/run_regression.py
-	@echo "========== DRC-Regression is done =========="
 
 .ONESHELL:
 test-DRC-% : | $(CONDA_ENV_PYTHON)
 	@which python3
 	@$(IN_CONDA_ENV) python3 $(KLAYOUT_TESTS)/run_regression.py --table=$*
-	@echo "========== Table DRC-Regression is done =========="
 
 #=================================
 # -------- test-DRC-switch -------
