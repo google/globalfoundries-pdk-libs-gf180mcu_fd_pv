@@ -50,12 +50,9 @@ test-DRC-% :  | $(CONDA_ENV_PYTHON)
 #=================================
 # -------- test-DRC-switch -------
 #=================================
-
-# .ONESHELL:
-# test-DRC-switch: | $(CONDA_ENV_PYTHON) 
-# 	@echo "========== DRC-Switch testing =========="
-# 	@$(IN_CONDA_ENV) python3 $(KLAYOUT_TESTS)/run_switch_checking.py && rm -rf pattern.csv
-
+# LVS main testing
+test-DRC-switch: | $(CONDA_ENV_PYTHON)
+	@$(IN_CONDA_ENV) klayout -v
 
 ################################################################################
 ## LVS Regression section

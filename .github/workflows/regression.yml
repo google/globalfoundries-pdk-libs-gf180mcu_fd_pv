@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { tool: klayout, part: drc, test: main }
+          - { tool: klayout, part: drc, test: dualgate }
           - { tool: klayout, part: drc, test: switch }
           - { tool: klayout, part: lvs, test: main }
           - { tool: klayout, part: lvs, test: switch }
