@@ -29,7 +29,8 @@ jobs:
   regression:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 8
+      max-parallel: 4
+      fail-fast: false
       matrix:
         include:
           - { tool: klayout, part: drc, test: dualgate }
