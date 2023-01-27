@@ -735,7 +735,7 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
             df[c] = 0
     else:
         df = results_df.merge(rules_df, how="outer", on=["table_name", "rule_name"])
-        
+
     df[ANALYSIS_RULES] = df[ANALYSIS_RULES].fillna(0)
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
