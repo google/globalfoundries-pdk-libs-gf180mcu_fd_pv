@@ -321,12 +321,15 @@ def run_all_test_cases(tc_df, drc_dir, run_dir, num_workers):
                     rule_counts_df["count"] = rule_counts_df["count"].astype(int)
                     rule_counts_df = rule_counts_df.pivot(index="rule_name", columns="type", values="count").fillna(0)\
                                      .reset_index(drop=False).rename(columns={"index": "rule_name"})
+
+                    rule_counts_df["table_name"] = tc_df.loc[tc_df["run_id"] == run_id, "table_name"].iloc[0]
+
                     for c in ANALYSIS_RULES:
                         if c not in rule_counts_df.columns:
                             rule_counts_df[c] = 0
                     
                     rule_counts_df[ANALYSIS_RULES] = rule_counts_df[ANALYSIS_RULES].astype(int)
-                    rule_counts_df = rule_counts_df[["rule_name"] + ANALYSIS_RULES]
+                    rule_counts_df = rule_counts_df[["table_name", "rule_name"] + ANALYSIS_RULES]
                     results_df_list.append(rule_counts_df)
                     tc_df.loc[tc_df["run_id"] == run_id, "run_status"] = "completed"
                 else:
@@ -591,7 +594,6 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
             if rule_name is None:
                 elem.clear()
                 continue
-
         else:
             elem.clear()
             continue
@@ -619,7 +621,7 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
 
     # Saving analysis rule deck.
     for r in rule_data_type_map:
-        rule_lay_dt = rule_data_type_map.index(rule_name) + 1
+        rule_lay_dt = rule_data_type_map.index(r) + 1
         pass_patterns_rule = f'''
         pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
         '''
@@ -697,6 +699,36 @@ def build_tests_dataframe(unit_test_cases_dir, target_table):
     tc_df["run_id"] = range(len(tc_df))
     return tc_df
 
+def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: pd.DataFrame):
+    """
+    aggregate_results Aggregate the results for all runs.
+
+    Parameters
+    ----------
+    tc_df : pd.DataFrame
+        Dataframe that holds the information about the test cases.
+    results_df : pd.DataFrame
+        Dataframe that holds the information about the unit test rules.
+    rules_df : pd.DataFrame
+        Dataframe that holds the information about all the rules implemented in the rule deck.
+    
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame that has all data analysis aggregated into one.
+    """
+    df = results_df.merge(rules_df, how="outer", on=["table_name", "rule_name"])
+    df[ANALYSIS_RULES] = df[ANALYSIS_RULES].fillna(0)
+    df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
+
+    df["rule_status"] = "Passed"
+    df.loc[(df["false_negative"] > 0),  "rule_status"] = "Rule Failed"
+    df.loc[(df["false_positive"] > 0),  "rule_status"] = "Rule Failed"
+    df.loc[(df["pass_patterns"] < 1),  "rule_status"] = "Rule Not Tested"
+    df.loc[(df["fail_patterns"] < 1),  "rule_status"] = "Rule Not Tested"
+    df.loc[~(df["run_status"].isin(["completed"])),  "rule_status"] = "Test Case Run Failed"
+
+    return df
 
 def run_regression(drc_dir, output_path, target_table, cpu_count):
     """
@@ -723,38 +755,35 @@ def run_regression(drc_dir, output_path, target_table, cpu_count):
     ## Parse Existing Rules
     rules_df = parse_existing_rules(drc_dir, output_path)
     logging.info("## Total number of rules found in rule decks: {}".format(len(rules_df)))
-    print(rules_df)
+    logging.info("## Parsed Rules: \n" + str(rules_df))
 
     ## Get all test cases available in the repo.
     test_cases_path = os.path.join(drc_dir, "testing/testcases")
     unit_test_cases_path = os.path.join(test_cases_path, "unit")
     tc_df = build_tests_dataframe(unit_test_cases_path, target_table)
     logging.info("## Total table gds files found: {}".format(len(tc_df)))
+    logging.info("## Found testcases: \n" + str(tc_df))
 
-    # ## Do some test cases coverage analysis
-    # cov_df = analyze_test_patterns_coverage(rules_df, tc_df, output_path)
-    # cov_df.drop_duplicates(inplace=True)
-    # print(cov_df)
-
-    ## Run all test cases
-    print(tc_df)
+    ## Run all test cases.
     results_df, tc_df = run_all_test_cases(tc_df, drc_dir, output_path, cpu_count)
-    print(results_df)
-    print(tc_df)
+    logging.info("## Testcases found results: \n" + str(results_df))
+    logging.info("## Updated testcases: \n" + str(tc_df))
 
-    exit()
-    all_tc_df.drop_duplicates(inplace=True)
-    print(all_tc_df)
-    all_tc_df.to_csv(
+    ## Aggregate all dataframes into one
+    df = aggregate_results(tc_df, results_df, rules_df)
+    df.drop_duplicates(inplace=True)
+    logging.info("## Final analysis table: \n" + str(df))
+
+    ## Generate error if there are any missing info or fails.
+    df.to_csv(
         os.path.join(output_path, "all_test_cases_results.csv"), index=False
     )
 
     ## Check if there any rules that generated false positive or false negative
-    failing_results = all_tc_df[
-        ~all_tc_df["run_status"].isin(["Passed_rule", "Not_tested"])
+    failing_results = df[
+        ~df["rule_status"].isin(["Passed"])
     ]
-    print(failing_results)
-    logging.info("## Failing testcases : {}".format(len(failing_results)))
+    logging.info("## Failing test cases: \n" + str(failing_results))
 
     if len(failing_results) > 0:
         logging.error("## Some test cases failed .....")
