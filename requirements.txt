@@ -1,2 +1,5 @@
-flake8 
-
+flake8
+docopt
+gdstk
+pandas
+tqdm
