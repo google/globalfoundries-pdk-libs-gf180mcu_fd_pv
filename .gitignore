@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+klayout/drc/testing/unit_tests_*
+
 # C extensions
 *.so
 

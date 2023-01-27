@@ -4,3 +4,4 @@ gdstk
 pandas
 tqdm
 pyyaml
+klayout

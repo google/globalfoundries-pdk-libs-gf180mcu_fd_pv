@@ -7,11 +7,8 @@ Explains how to use the runset.
 ```text
 📦drc
  ┣ 📦testing
- ┣ 📜GF180_MCU.lyp
+ ┣ 📦rule_decks
  ┣ 📜README.md
- ┣ 📜gf_018mcu.drc
- ┣ 📜gf_018mcu_antenna.drc
- ┣ 📜gf_018mcu_density.drc
  ┗ 📜run_drc.py
  ```
 
@@ -19,14 +16,11 @@ Explains how to use the runset.
 The `run_drc.py` script takes a gds file to run DRC rule decks of GF180 technology with switches to select subsets of all checks. 
 
 ### Requirements
-Please make sure to define PDK_ROOT and PDK environment variables to make it work. Example definition would be to work for this repo, go to the `rules/klayout` directory and run:
+Please make sure to use the latest Klayout setup at your side.
+
+Also, please make sure to install the required python packages at `requirements.txt` by using
 ```bash
-export PDK_ROOT=`pwd`
-export PDK="drc"
-```
-Also, please make sure to install the required python packages at `../requirements.test.txt` by using
-```bash
-pip install -r ../requirements.test.txt
+pip install -r requirements.test.txt
 ```
 
 
