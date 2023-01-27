@@ -724,7 +724,18 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     pd.DataFrame
         A DataFrame that has all data analysis aggregated into one.
     """
-    df = results_df.merge(rules_df, how="outer", on=["table_name", "rule_name"])
+    if len(rules_df) < 1 and len(results_df) < 1:
+        logging.error("## There are no rules for analysis or run.")
+        exit(1)
+    elif len(rules_df) < 1 and len(results_df) > 0:
+        df = results_df
+    elif len(rules_df) > 0 and len(results_df) < 1:
+        df = rules_df
+        for c in ANALYSIS_RULES:
+            df[c] = 0
+    else:
+        df = results_df.merge(rules_df, how="outer", on=["table_name", "rule_name"])
+        
     df[ANALYSIS_RULES] = df[ANALYSIS_RULES].fillna(0)
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
