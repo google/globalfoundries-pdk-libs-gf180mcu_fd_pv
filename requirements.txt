@@ -3,3 +3,4 @@ docopt
 gdstk
 pandas
 tqdm
+pyyaml
