@@ -90,6 +90,7 @@ def get_unit_test_coverage(gds_file):
 
     return rules
 
+
 def check_klayout_version():
     """
     check_klayout_version checks klayout version and makes sure it would work with the DRC.
@@ -180,6 +181,7 @@ def parse_results_db(results_database):
 
     return rule_counts
 
+
 def run_test_case(
     drc_dir,
     layout_path,
@@ -216,7 +218,6 @@ def run_test_case(
         switches = " ".join(get_switches(sw_file, table_name))
     else:
         switches = "--variant=C"  # default switch
-
 
     # Adding switches for specific runsets
     if "antenna" in str(layout_path):
@@ -264,13 +265,14 @@ def run_test_case(
 
             if os.path.exists(final_report):
                 rule_counts = parse_results_db(final_report)
-                return rule_counts 
+                return rule_counts
             else:
                 return rule_counts
         else:
             return rule_counts
     else:
         return rule_counts
+
 
 def run_all_test_cases(tc_df, drc_dir, run_dir, num_workers):
     """
@@ -319,15 +321,19 @@ def run_all_test_cases(tc_df, drc_dir, run_dir, num_workers):
                     rule_counts_df["type"] = rule_counts_df["analysis_rule"].str.split(RULE_STR_SEP).str[1]
                     rule_counts_df.drop(columns=["analysis_rule"], inplace=True)
                     rule_counts_df["count"] = rule_counts_df["count"].astype(int)
-                    rule_counts_df = rule_counts_df.pivot(index="rule_name", columns="type", values="count").fillna(0)\
-                                     .reset_index(drop=False).rename(columns={"index": "rule_name"})
+                    rule_counts_df = rule_counts_df.pivot(index="rule_name",
+                                                          columns="type",
+                                                          values="count")
+                    rule_counts_df = rule_counts_df.fillna(0)
+                    rule_counts_df = rule_counts_df.reset_index(drop=False)
+                    rule_counts_df = rule_counts_df.rename(columns={"index": "rule_name"})
 
                     rule_counts_df["table_name"] = tc_df.loc[tc_df["run_id"] == run_id, "table_name"].iloc[0]
 
                     for c in ANALYSIS_RULES:
                         if c not in rule_counts_df.columns:
                             rule_counts_df[c] = 0
-                    
+
                     rule_counts_df[ANALYSIS_RULES] = rule_counts_df[ANALYSIS_RULES].astype(int)
                     rule_counts_df = rule_counts_df[["table_name", "rule_name"] + ANALYSIS_RULES]
                     results_df_list.append(rule_counts_df)
@@ -639,11 +645,11 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
         analysis_rules.append(fail_patterns_rule)
         analysis_rules.append(false_pos_rule)
         analysis_rules.append(false_neg_rule)
-    
+
     for r in rules_tested:
         if r in rule_data_type_map:
             continue
-        
+
         pass_patterns_rule = f'''
         pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
         '''
@@ -699,6 +705,7 @@ def build_tests_dataframe(unit_test_cases_dir, target_table):
     tc_df["run_id"] = range(len(tc_df))
     return tc_df
 
+
 def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: pd.DataFrame):
     """
     aggregate_results Aggregate the results for all runs.
@@ -711,7 +718,7 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
         Dataframe that holds the information about the unit test rules.
     rules_df : pd.DataFrame
         Dataframe that holds the information about all the rules implemented in the rule deck.
-    
+
     Returns
     -------
     pd.DataFrame
@@ -722,13 +729,14 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
     df["rule_status"] = "Passed"
-    df.loc[(df["false_negative"] > 0),  "rule_status"] = "Rule Failed"
-    df.loc[(df["false_positive"] > 0),  "rule_status"] = "Rule Failed"
-    df.loc[(df["pass_patterns"] < 1),  "rule_status"] = "Rule Not Tested"
-    df.loc[(df["fail_patterns"] < 1),  "rule_status"] = "Rule Not Tested"
-    df.loc[~(df["run_status"].isin(["completed"])),  "rule_status"] = "Test Case Run Failed"
+    df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
+    df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
+    df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
 
     return df
+
 
 def run_regression(drc_dir, output_path, target_table, cpu_count):
     """
