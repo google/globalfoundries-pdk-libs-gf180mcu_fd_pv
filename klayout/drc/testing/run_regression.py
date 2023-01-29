@@ -43,6 +43,7 @@ from pathlib import Path
 from tqdm import tqdm
 import re
 import gdstk
+import errno
 
 from collections import defaultdict
 
@@ -354,7 +355,7 @@ def run_all_test_cases(tc_df, drc_dir, run_dir, num_workers):
     return results_df, tc_df
 
 
-def parse_existing_rules(rule_deck_path, output_path):
+def parse_existing_rules(rule_deck_path, output_path, target_table=None):
     """
     This function collects the rule names from the existing drc rule decks.
 
@@ -364,6 +365,8 @@ def parse_existing_rules(rule_deck_path, output_path):
         Path string to the DRC directory where all the DRC files are located.
     output_path : string or Path
         Path of the run location to store the output analysis file.
+    target_table : string Optional
+        Name of the table to be in testing
 
     Returns
     -------
@@ -371,7 +374,15 @@ def parse_existing_rules(rule_deck_path, output_path):
         A pandas DataFrame with the rule and rule deck used.
     """
 
-    drc_files = glob.glob(os.path.join(rule_deck_path, "rule_decks", "*.drc"))
+    if target_table is None:
+        drc_files = glob.glob(os.path.join(rule_deck_path, "rule_decks", "*.drc"))
+    else:
+        table_rule_file = os.path.join(rule_deck_path, "rule_decks", f"{target_table}.drc")
+        if not os.path.isfile(table_rule_file):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), table_rule_file)
+        
+        drc_files = [table_rule_file]
+
     rules_data = list()
 
     for runset in drc_files:
@@ -772,7 +783,7 @@ def run_regression(drc_dir, output_path, target_table, cpu_count):
     """
 
     ## Parse Existing Rules
-    rules_df = parse_existing_rules(drc_dir, output_path)
+    rules_df = parse_existing_rules(drc_dir, output_path, target_table)
     logging.info("## Total number of rules found in rule decks: {}".format(len(rules_df)))
     logging.info("## Parsed Rules: \n" + str(rules_df))
 
