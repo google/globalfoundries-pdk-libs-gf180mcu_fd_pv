@@ -213,7 +213,7 @@ def run_test_case(
     rule_counts = defaultdict(int)
 
     # Get switches used for each run
-    sw_file = os.path.join(Path(layout_path.parent.parent).absolute(), f"{table_name}.{SUPPORTED_SW_EXT}")
+    sw_file = os.path.join(Path(layout_path.parent).absolute(), f"{table_name}.{SUPPORTED_SW_EXT}")
 
     if os.path.exists(sw_file):
         switches = " ".join(get_switches(sw_file, table_name))
