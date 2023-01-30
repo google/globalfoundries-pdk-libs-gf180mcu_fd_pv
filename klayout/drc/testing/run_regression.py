@@ -393,6 +393,7 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
                     rule_info = dict()
                     rule_info["table_name"] = os.path.basename(runset).replace(".drc", "")
                     rule_info["rule_name"] = line_list[1]
+                    rule_info["in_rule_deck"] = 1
                     rules_data.append(rule_info)
 
     df = pd.DataFrame(rules_data)
@@ -748,6 +749,7 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
         df = results_df.merge(rules_df, how="outer", on=["table_name", "rule_name"])
 
     df[ANALYSIS_RULES] = df[ANALYSIS_RULES].fillna(0)
+    df["in_rule_deck"] = df["in_rule_deck"].fillna(0)
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
     df["rule_status"] = "Passed"
@@ -755,6 +757,7 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
     df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
 
     return df
