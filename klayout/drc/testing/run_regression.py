@@ -380,7 +380,7 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
         table_rule_file = os.path.join(rule_deck_path, "rule_decks", f"{target_table}.drc")
         if not os.path.isfile(table_rule_file):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), table_rule_file)
-        
+
         drc_files = [table_rule_file]
 
     rules_data = list()
