@@ -5,9 +5,9 @@ Explains how to use the runset.
 ## Folder Structure
 
 ```text
-📦drc
- ┣ 📦testing
- ┣ 📦rule_decks
+📁drc
+ ┣ 📁testing
+ ┣ 📁rule_decks
  ┣ 📜README.md
  ┗ 📜run_drc.py
  ```
