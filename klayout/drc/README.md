@@ -23,22 +23,11 @@ Also, please make sure to install the required python packages at `requirements.
 pip install -r requirements.txt
 ```
 
-
-### Switches
-The list of switches used for running DRC:
-
-1. **FEOL**          : Default is on. Use it for checking Front End Of Line layers (wells, diffusion, polys, contacts).
-2. **BEOL**          : Default is on. Use it for checking Back End Of Line layers (metal layers, top metal layer, vias).
-3. **BEOL**          : Default is on. Use it for checking Back End Of Line layers (metal layers, top metal layer, vias).
-4. **GF180MCU**=A    : combined options of metal_level=3, mim_option=A, metal_top=30K, poly_res=1K, and mim_cap=2
-5. **GF180MCU**=B    : combined options of metal_level=4, mim_option=B, metal_top=11K, poly_res=1K, and mim_cap=2
-6. **GF180MCU**=C    : combined options of metal_level=5, mim_option=B, metal_top=9K,  poly_res=1K, and mim_cap=2
-7. **connectivity**  : Default is off. Use it for check connectivity rules.
-8. **DENSITY**       : Default is off. Use it for check density rules.
-9. **DENSITY_only**  : Default is off. Use it for check density rules only.
-10. **ANTENNA**       : Default is off. Use it to turn on Antenna checks.
-11. **ANTENNA_only** : Default is off. Use it to turn on Antenna checks only.
-12. **OFFGRID**      : Default is on. Use it for checking off-grid and acute layers (ongrid of 0.005um and angles 45 deg. unless otherwise stated).
+### Metal Stack Options
+We have a list of metal stack options which corresponds to the following:
+- **Option A** : combined options of metal_level=3, mim_option=A, metal_top=30K, poly_res=1K, and mim_cap=2
+- **Option B** : combined options of metal_level=4, mim_option=B, metal_top=11K, poly_res=1K, and mim_cap=2
+- **Option C** : combined options of metal_level=5, mim_option=B, metal_top=9K,  poly_res=1K, and mim_cap=2
 
 ### Usage
 
