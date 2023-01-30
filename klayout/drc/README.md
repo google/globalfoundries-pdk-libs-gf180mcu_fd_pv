@@ -20,7 +20,7 @@ Please make sure to use the latest Klayout setup at your side.
 
 Also, please make sure to install the required python packages at `requirements.txt` by using
 ```bash
-pip install -r requirements.test.txt
+pip install -r requirements.txt
 ```
 
 
