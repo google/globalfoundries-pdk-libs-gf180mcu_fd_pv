@@ -16,7 +16,7 @@ Explains how to use the runset.
 The `run_drc.py` script takes a gds file to run DRC rule decks of GF180 technology with switches to select subsets of all checks. 
 
 ### Requirements
-Please make sure to use the latest Klayout setup at your side.
+Please make sure to use the latest Klayout setup at your side. To install klayout, please refer to documentation at [klayout build](https://www.klayout.de/build.html).
 
 Also, please make sure to install the required python packages at `requirements.txt` by using
 ```bash
