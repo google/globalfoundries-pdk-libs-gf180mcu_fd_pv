@@ -44,36 +44,36 @@ Example:
 
 ### Options
 
-`--help -h`                           Print this help message.
+- `--help -h`                           Print this help message.
 
-`--path=<file_path>`                  The input GDS file path.
+- `--path=<file_path>`                  The input GDS file path.
 
-`--gf180mcu=<combined_options>`       Select combined options of metal_top, mim_option, and metal_level. Allowed values (A, B, C).
-                                      gf180mcu=A: Select  metal_top=30K  mim_option=A  metal_level=3LM
-                                      gf180mcu=B: Select  metal_top=11K  mim_option=B  metal_level=4LM
-                                      gf180mcu=C: Select  metal_top=9K   mim_option=B  metal_level=5LM
+- `--gf180mcu=<combined_options>`       Select combined options of metal_top, mim_option, and metal_level. Allowed values (A, B, C).
+  - gf180mcu=A: Select  metal_top=30K  mim_option=A  metal_level=3LM
+  - gf180mcu=B: Select  metal_top=11K  mim_option=B  metal_level=4LM
+  - gf180mcu=C: Select  metal_top=9K   mim_option=B  metal_level=5LM
 
-`--topcell=<topcell_name>`            Topcell name to use.
+- `--topcell=<topcell_name>`            Topcell name to use.
 
-`--thr=<thr>`                         The number of threads used in run.
+- `--thr=<thr>`                         The number of threads used in run.
 
-`--run_mode=<run_mode>`               Select klayout mode Allowed modes (flat , deep, tiling). [default: flat]
+- `--run_mode=<run_mode>`               Select klayout mode Allowed modes (flat , deep, tiling). [default: flat]
 
-`--no_feol`                           Turn off FEOL rules from running.
+- `--no_feol`                           Turn off FEOL rules from running.
 
-`--no_beol`                           Turn off BEOL rules from running.
+- `--no_beol`                           Turn off BEOL rules from running.
 
-`--connectivity`                      Turn on connectivity rules.
+- `--connectivity`                      Turn on connectivity rules.
 
-`--density`                           Turn on Density rules.
+- `--density`                           Turn on Density rules.
 
-`--density_only`                      Turn on Density rules only.
+- `--density_only`                      Turn on Density rules only.
 
-`--antenna`                           Turn on Antenna checks.
+- `--antenna`                           Turn on Antenna checks.
 
-`--antenna_only`                      Turn on Antenna checks only.
+- `--antenna_only`                      Turn on Antenna checks only.
 
-`--no_offgrid`                        Turn off OFFGRID checking rules.
+- `--no_offgrid`                        Turn off OFFGRID checking rules.
 
 ### **DRC Outputs**
 
