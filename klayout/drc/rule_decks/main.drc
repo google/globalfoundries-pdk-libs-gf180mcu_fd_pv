@@ -890,32 +890,38 @@ polygons_count  += count
 logger.info("Total no. of polygons in the design is #{polygons_count}")
 
 logger.info("Starting deriving base layers.")
+
 #=====================================================
 #------------- BASE LAYERS DERIVATIONS ---------------
 #=====================================================
+
+dnwell_n        = dnwell.not(lvpwell)
+dnwell_p        = dnwell.and(lvpwell)
+
+all_nwell       = dnwell_n.join(nwell)
 
 ncomp           = comp.and(nplus)
 pcomp           = comp.and(pplus)
 tgate           = poly2.and(comp).not(res_mk)
 
-ngate           = nplus.and(tgate)
-nactive         = ncomp.not(nwell)
+nactive         = ncomp.not(all_nwell)
+ngate           = nactive.and(tgate)
 nsd             = nactive.interacting(ngate).not(ngate).not(res_mk)
-ptap            = pcomp.not(nwell).join(pcomp.and(lvpwell)).not(res_mk)
+ptap            = pcomp.not(all_nwell).not(res_mk)
 
-pgate           = pplus.and(tgate)
-pactive         = pcomp.and(nwell)
+pactive         = pcomp.and(all_nwell)
+pgate           = pactive.and(tgate)
 psd             = pactive.interacting(pgate).not(pgate).not(res_mk)
-ntap            = ncomp.and(nwell).join(ncomp.and(dnwell).not(lvpwell)).not(res_mk)
+ntap            = ncomp.and(all_nwell).not(res_mk)
 
-ngate_dn        = ngate.and(lvpwell).and(dnwell)
-ptap_dn         = ptap.and(dnwell).outside(well_diode_mk)
+ngate_dn        = ngate.and(dnwell_p)
+ptap_dn         = ptap.and(dnwell_p).outside(well_diode_mk)
 
-pgate_dn        = pgate.and(dnwell).not(lvpwell)
-ntap_dn         = ntap.and(dnwell)
+pgate_dn        = pgate.and(dnwell_n)
+ntap_dn         = ntap.and(dnwell_n)
 
-psd_dn          = pcomp.not(lvpwell).and(dnwell).interacting(pgate_dn).not(pgate_dn).not(res_mk)
-nsd_dn          = ncomp.and(dnwell).not(lvpwell).interacting(ngate_dn).not(ngate_dn).not(res_mk)
+psd_dn          = pcomp.and(dnwell_n).interacting(pgate_dn).not(pgate_dn).not(res_mk)
+nsd_dn          = ncomp.and(dnwell_p).interacting(ngate_dn).not(ngate_dn).not(res_mk)
 
 natcompsd	 = (nat       & comp.interacting(poly2)) - tgate
 

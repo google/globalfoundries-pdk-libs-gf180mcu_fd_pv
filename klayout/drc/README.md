@@ -5,9 +5,9 @@ Explains how to use the runset.
 ## Folder Structure
 
 ```text
-📦drc
- ┣ 📦testing
- ┣ 📦rule_decks
+📁drc
+ ┣ 📁testing
+ ┣ 📁rule_decks
  ┣ 📜README.md
  ┗ 📜run_drc.py
  ```
@@ -16,29 +16,18 @@ Explains how to use the runset.
 The `run_drc.py` script takes a gds file to run DRC rule decks of GF180 technology with switches to select subsets of all checks. 
 
 ### Requirements
-Please make sure to use the latest Klayout setup at your side.
+Please make sure to use the latest Klayout setup at your side. To install klayout, please refer to documentation at [klayout build](https://www.klayout.de/build.html).
 
 Also, please make sure to install the required python packages at `requirements.txt` by using
 ```bash
-pip install -r requirements.test.txt
+pip install -r requirements.txt
 ```
 
-
-### Switches
-The list of switches used for running DRC:
-
-1. **FEOL**          : Default is on. Use it for checking Front End Of Line layers (wells, diffusion, polys, contacts).
-2. **BEOL**          : Default is on. Use it for checking Back End Of Line layers (metal layers, top metal layer, vias).
-3. **BEOL**          : Default is on. Use it for checking Back End Of Line layers (metal layers, top metal layer, vias).
-4. **GF180MCU**=A    : combined options of metal_level=3, mim_option=A, metal_top=30K, poly_res=1K, and mim_cap=2
-5. **GF180MCU**=B    : combined options of metal_level=4, mim_option=B, metal_top=11K, poly_res=1K, and mim_cap=2
-6. **GF180MCU**=C    : combined options of metal_level=5, mim_option=B, metal_top=9K,  poly_res=1K, and mim_cap=2
-7. **connectivity**  : Default is off. Use it for check connectivity rules.
-8. **DENSITY**       : Default is off. Use it for check density rules.
-9. **DENSITY_only**  : Default is off. Use it for check density rules only.
-10. **ANTENNA**       : Default is off. Use it to turn on Antenna checks.
-11. **ANTENNA_only** : Default is off. Use it to turn on Antenna checks only.
-12. **OFFGRID**      : Default is on. Use it for checking off-grid and acute layers (ongrid of 0.005um and angles 45 deg. unless otherwise stated).
+### Metal Stack Options
+We have a list of metal stack options which corresponds to the following:
+- **Option A** : combined options of metal_level=3, mim_option=A, metal_top=30K, poly_res=1K, and mim_cap=2
+- **Option B** : combined options of metal_level=4, mim_option=B, metal_top=11K, poly_res=1K, and mim_cap=2
+- **Option C** : combined options of metal_level=5, mim_option=B, metal_top=9K,  poly_res=1K, and mim_cap=2
 
 ### Usage
 
@@ -55,36 +44,36 @@ Example:
 
 ### Options
 
-`--help -h`                           Print this help message.
+- `--help -h`                           Print this help message.
 
-`--path=<file_path>`                  The input GDS file path.
+- `--path=<file_path>`                  The input GDS file path.
 
-`--gf180mcu=<combined_options>`       Select combined options of metal_top, mim_option, and metal_level. Allowed values (A, B, C).
-                                      gf180mcu=A: Select  metal_top=30K  mim_option=A  metal_level=3LM
-                                      gf180mcu=B: Select  metal_top=11K  mim_option=B  metal_level=4LM
-                                      gf180mcu=C: Select  metal_top=9K   mim_option=B  metal_level=5LM
+- `--gf180mcu=<combined_options>`       Select combined options of metal_top, mim_option, and metal_level. Allowed values (A, B, C).
+  - gf180mcu=A: Select  metal_top=30K  mim_option=A  metal_level=3LM
+  - gf180mcu=B: Select  metal_top=11K  mim_option=B  metal_level=4LM
+  - gf180mcu=C: Select  metal_top=9K   mim_option=B  metal_level=5LM
 
-`--topcell=<topcell_name>`            Topcell name to use.
+- `--topcell=<topcell_name>`            Topcell name to use.
 
-`--thr=<thr>`                         The number of threads used in run.
+- `--thr=<thr>`                         The number of threads used in run.
 
-`--run_mode=<run_mode>`               Select klayout mode Allowed modes (flat , deep, tiling). [default: flat]
+- `--run_mode=<run_mode>`               Select klayout mode Allowed modes (flat , deep, tiling). [default: flat]
 
-`--no_feol`                           Turn off FEOL rules from running.
+- `--no_feol`                           Turn off FEOL rules from running.
 
-`--no_beol`                           Turn off BEOL rules from running.
+- `--no_beol`                           Turn off BEOL rules from running.
 
-`--connectivity`                      Turn on connectivity rules.
+- `--connectivity`                      Turn on connectivity rules.
 
-`--density`                           Turn on Density rules.
+- `--density`                           Turn on Density rules.
 
-`--density_only`                      Turn on Density rules only.
+- `--density_only`                      Turn on Density rules only.
 
-`--antenna`                           Turn on Antenna checks.
+- `--antenna`                           Turn on Antenna checks.
 
-`--antenna_only`                      Turn on Antenna checks only.
+- `--antenna_only`                      Turn on Antenna checks only.
 
-`--no_offgrid`                        Turn off OFFGRID checking rules.
+- `--no_offgrid`                        Turn off OFFGRID checking rules.
 
 ### **DRC Outputs**
 
