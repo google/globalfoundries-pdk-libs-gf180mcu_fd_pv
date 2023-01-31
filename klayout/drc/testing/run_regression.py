@@ -803,6 +803,7 @@ def aggregate_results(
     df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[(df["fail_patterns"] < 1) | (df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
     df.loc[
         ~(df["run_status"].isin(["completed"])), "rule_status"
