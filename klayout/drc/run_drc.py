@@ -105,39 +105,10 @@ def check_drc_results(results_db_files: list):
 
     if len(full_violating_rules) > 0:
         logging.error("Klayout DRC run is not clean.")
-        logging.error("Violated rules are : {}\n".format(str(full_violating_rules)))
+        logging.error(f"Violated rules are : {str(full_violating_rules)}\n")
         exit(1)
     else:
         logging.info("Klayout DRC run is clean. GDS has no DRC violations.")
-
-
-def get_results(rule_deck, rules, lyrdb, type):
-
-    mytree = ET.parse(f"{lyrdb}_{type}_gf{arguments['--gf180mcu']}.lyrdb")
-    myroot = mytree.getroot()
-
-    violated = []
-
-    for lrule in rules:
-        # Loop on database to get the violations of required rule
-        for z in myroot[7]:
-            if f"'{lrule}'" == f"{z[1].text}":
-                violated.append(lrule)
-                break
-
-    lyrdb_clean = lyrdb.split("/")[-1]
-
-    if len(violated) > 0:
-        logging.error(
-            f"\nTotal # of DRC violations in {rule_deck}.drc is {len(violated)}. Please check {lyrdb_clean}_{type}_gf{arguments['--gf180mcu']}.lyrdb file For more details"
-        )
-        logging.info("Klayout GDS DRC Not Clean")
-        logging.info(f"Violated rules are : {violated}\n")
-    else:
-        logging.info(
-            f"\nCongratulations !!. No DRC Violations found in {lyrdb_clean} for {rule_deck}.drc rule deck with switch gf{arguments['--gf180mcu']}"
-        )
-        logging.info("Klayout GDS DRC Clean\n")
 
 
 def generate_drc_run_template(drc_dir: str, run_dir: str, run_tables_list: list = []):
@@ -178,11 +149,9 @@ def generate_drc_run_template(drc_dir: str, run_dir: str, run_tables_list: list 
         deck_name = "main"
 
     logging.info(
-        "## Generating template with for the following rule tables: {}".format(
-            str(all_tables)
-        )
+        f"## Generating template with for the following rule tables: {all_tables}"
     )
-    print(run_dir)
+    logging.info(f"## Your run dir located at: {run_dir}")
 
     all_tables.insert(0, "main.drc")
     all_tables.append("tail.drc")
@@ -229,10 +198,7 @@ def get_list_of_tables(drc_dir: str):
     return [
         os.path.basename(f).replace(".drc", "")
         for f in glob.glob(os.path.join(drc_dir, "rule_decks", "*.drc"))
-        if "antenna" not in f
-        and "density" not in f
-        and "main" not in f
-        and "tail" not in f
+        if all(t not in f for t in ("antenna", "density", "main", "tail"))
     ]
 
 
@@ -302,20 +268,17 @@ def generate_klayout_switches(arguments, layout_path):
         switches["metal_top"] = "30K"
         switches["mim_option"] = "A"
         switches["metal_level"] = "3LM"
-        # switches = switches + f"-rd metal_top=30K -rd mim_option=A -rd metal_level=3LM "
     elif arguments["--variant"] == "B":
         switches["metal_top"] = "11K"
         switches["mim_option"] = "B"
         switches["metal_level"] = "4LM"
-        # switches = switches + f"-rd metal_top=11K -rd mim_option=B -rd metal_level=4LM "
     elif arguments["--variant"] == "C":
         switches["metal_top"] = "9K"
         switches["mim_option"] = "B"
         switches["metal_level"] = "5LM"
-        # switches = switches + f"-rd metal_top=9K  -rd mim_option=B -rd metal_level=5LM "
     else:
         logging.error("variant switch allowed values are (A , B, C) only")
-        exit()
+        exit(1)
 
     if arguments["--verbose"]:
         switches["verbose"] = "true"
@@ -363,30 +326,27 @@ def check_klayout_version():
     klayout_v_list = []
 
     if klayout_v_ == "":
-        logging.error("Klayout is not found. Please make sure klayout is installed.")
+        logging.error(
+            f"Klayout is not found. Please make sure klayout is installed. Current version: {klayout_v_}"
+        )
         exit(1)
     else:
         klayout_v_list = [int(v) for v in klayout_v_.split(" ")[-1].split(".")]
 
-    logging.info(f"Your Klayout version is: {klayout_v_}")
-
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
-        logging.error("Was not able to get klayout version properly.")
+        logging.error(
+            f"Was not able to get klayout version properly. Current version: {klayout_v_}"
+        )
         exit(1)
-    elif len(klayout_v_list) == 2:
+    elif len(klayout_v_list) >= 2 and len(klayout_v_list) <= 3:
         if klayout_v_list[1] < 28:
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
+            logging.error("Prerequisites at a minimum: KLayout 0.28.0")
             logging.error(
                 "Using this klayout version has not been assesed in this development. Limits are unknown"
             )
             exit(1)
-    elif len(klayout_v_list) == 3:
-        if klayout_v_list[1] < 28 :
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
-            logging.error(
-                "Using this klayout version has not been assesed in this development. Limits are unknown"
-            )
-            exit(1)
+
+    logging.info(f"Your Klayout version is: {klayout_v_}")
 
 
 def check_layout_path(layout_path):
@@ -405,11 +365,15 @@ def check_layout_path(layout_path):
     """
 
     if not os.path.isfile(layout_path):
-        logging.error("## GDS file path provided doesn't exist or not a file.")
+        logging.error(
+            f"## GDS file path {layout_path} provided doesn't exist or not a file."
+        )
         exit(1)
 
     if ".gds" not in layout_path and ".oas" not in layout_path:
-        logging.error("## Layout is not in GDSII or OASIS format. Please use gds format.")
+        logging.error(
+            f"## Layout {layout_path} is not in GDSII or OASIS format. Please use gds format."
+        )
         exit(1)
 
     return os.path.abspath(layout_path)
@@ -424,11 +388,7 @@ def build_switches_string(sws: dict):
     sws : dict
         Dictionary that holds the Antenna swithces.
     """
-    switches_str = ""
-    for k in sws:
-        switches_str += "-rd {}={} ".format(k, sws[k])
-
-    return switches_str
+    return " ".join(f"-rd {k}={v}" for k, v in sws.items())
 
 
 def run_check(drc_file: str, drc_name: str, path: str, run_dir: str, sws: dict):
@@ -469,12 +429,8 @@ def run_check(drc_file: str, drc_name: str, path: str, run_dir: str, sws: dict):
     new_sws["report"] = report_path
     sws_str = build_switches_string(new_sws)
     sws_str += f" -rd table_name={drc_name}"
-    # log_file = os.path.join(
-    #     run_dir, "{}_{}.log".format(layout_base_name, drc_name)
-    # )
 
     run_str = f"klayout -b -r {drc_file} {sws_str}"
-
     check_call(run_str, shell=True)
 
     return report_path
@@ -620,7 +576,7 @@ def run_single_processor(
     check_drc_results(list_res_db_files)
 
 
-def main(drc_run_dir: str, now_str: str, arguments: dict):
+def main(drc_run_dir: str, arguments: dict):
     """
     main function to run the DRC.
 
@@ -628,18 +584,17 @@ def main(drc_run_dir: str, now_str: str, arguments: dict):
     ----------
     drc_run_dir : str
         String with absolute path of the full run dir.
-    now_str : str
-        String with the run name for logs.
     arguments : dict
         Dictionary that holds the arguments used by user in the run command. This is generated by docopt library.
     """
 
     # Check gds file existance
-    if os.path.exists(arguments["--path"]):
-        pass
-    else:
-        logging.error("The input GDS file path doesn't exist, please recheck.")
-        exit()
+    if not os.path.exists(arguments["--path"]):
+        file_path = arguments["--path"]
+        logging.error(
+            f"The input GDS file path {file_path} doesn't exist, please recheck."
+        )
+        exit(1)
 
     rule_deck_full_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -706,4 +661,4 @@ if __name__ == "__main__":
     )
 
     # Calling main function
-    main(drc_run_dir, now_str, arguments)
+    main(drc_run_dir, arguments)
