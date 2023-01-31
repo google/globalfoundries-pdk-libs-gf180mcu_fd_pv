@@ -242,12 +242,10 @@ def run_test_case(
     os.makedirs(output_loc, exist_ok=True)
     try:
         check_call(call_str, shell=True)
-    except Exception as e:
-        pattern_results = glob.glob(os.path.join(output_loc, f"{pattern_clean}*.lyrdb"))
-        if len(pattern_results) < 1:
-            logging.error("%s generated an exception: %s" % (pattern_clean, e))
-            traceback.print_exc()
-            raise Exception("Failed DRC run.")
+    except Exception as e:        
+        logging.error("%s generated an exception: %s" % (pattern_clean, e))
+        traceback.print_exc()
+        raise Exception("Failed DRC run.")
 
     # dumping log into output to make CI have the log
     if os.path.isfile(pattern_log):
