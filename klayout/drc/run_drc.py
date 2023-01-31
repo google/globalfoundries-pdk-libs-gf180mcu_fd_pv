@@ -111,35 +111,6 @@ def check_drc_results(results_db_files: list):
         logging.info("Klayout DRC run is clean. GDS has no DRC violations.")
 
 
-def get_results(rule_deck, rules, lyrdb, type):
-
-    mytree = ET.parse(f"{lyrdb}_{type}_gf{arguments['--gf180mcu']}.lyrdb")
-    myroot = mytree.getroot()
-
-    violated = []
-
-    for lrule in rules:
-        # Loop on database to get the violations of required rule
-        for z in myroot[7]:
-            if f"'{lrule}'" == f"{z[1].text}":
-                violated.append(lrule)
-                break
-
-    lyrdb_clean = lyrdb.split("/")[-1]
-
-    if len(violated) > 0:
-        logging.error(
-            f"\nTotal # of DRC violations in {rule_deck}.drc is {len(violated)}. Please check {lyrdb_clean}_{type}_gf{arguments['--gf180mcu']}.lyrdb file For more details"
-        )
-        logging.info("Klayout GDS DRC Not Clean")
-        logging.info(f"Violated rules are : {violated}\n")
-    else:
-        logging.info(
-            f"\nCongratulations !!. No DRC Violations found in {lyrdb_clean} for {rule_deck}.drc rule deck with switch gf{arguments['--gf180mcu']}"
-        )
-        logging.info("Klayout GDS DRC Clean\n")
-
-
 def generate_drc_run_template(drc_dir: str, run_dir: str, run_tables_list: list = []):
     """
     generate_drc_run_template will generate the template file to run drc in the run_dir path.
