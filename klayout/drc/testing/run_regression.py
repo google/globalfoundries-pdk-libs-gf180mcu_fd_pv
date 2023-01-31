@@ -705,9 +705,14 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
         analysis_rules.append(false_neg_rule)
         analysis_rules.append(rule_not_tested)
 
+    rule_lay_dt = len(rule_data_type_map) + 1
+
     for r in rules_tested:
         if r in rule_data_type_map:
             continue
+
+        rule_layer_name = f'rule_{r.replace(".", "_")}'
+        rule_layer = f"{rule_layer_name} = input({RULE_LAY_NUM}, {rule_lay_dt})"
 
         pass_patterns_rule = f"""
         pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
@@ -716,8 +721,23 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
         fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
         """
 
+        false_pos_rule = f"""
+        pass_marker.interacting(text_marker.texts("{r}")).interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
+        """
+        false_neg_rule = f"""
+        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
+        """
+        rule_not_tested = f"""
+        full_chip.not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}not_tested", "{r}{RULE_STR_SEP}not_tested occurred")
+        """
+
         analysis_rules.append(pass_patterns_rule)
         analysis_rules.append(fail_patterns_rule)
+        analysis_rules.append(false_pos_rule)
+        analysis_rules.append(false_neg_rule)
+        analysis_rules.append(rule_not_tested)
+
+        rule_lay_dt += 1
 
     with open(output_runset_path, "w") as runset_analysis:
         runset_analysis.write("".join(analysis_rules))
