@@ -472,7 +472,6 @@ def run_parallel_run(
         drc_path = os.path.join(rule_deck_full_path, "rule_decks", "density.drc")
         list_rule_deck_files["density"] = drc_path
 
-    ## list_res_db_files.append(run_check(drc_path, "antenna", layout_path, drc_run_dir, switches))
     if not arguments["--table"]:
         list_of_tables = get_list_of_tables(rule_deck_full_path)
     else:
