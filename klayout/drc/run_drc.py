@@ -149,11 +149,9 @@ def generate_drc_run_template(drc_dir: str, run_dir: str, run_tables_list: list 
         deck_name = "main"
 
     logging.info(
-        "## Generating template with for the following rule tables: {}".format(
-            str(all_tables)
-        )
+        f"## Generating template with for the following rule tables: {all_tables}"
     )
-    print(run_dir)
+    logging.info(f"## Your run dir located at: {run_dir}")
 
     all_tables.insert(0, "main.drc")
     all_tables.append("tail.drc")
