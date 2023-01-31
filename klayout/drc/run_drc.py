@@ -360,7 +360,7 @@ def check_klayout_version():
     klayout_v_list = []
 
     if klayout_v_ == "":
-        logging.error("Klayout is not found. Please make sure klayout is installed.")
+        logging.error(f"Klayout is not found. Please make sure klayout is installed. Current version: {klayout_v_}")
         exit(1)
     else:
         klayout_v_list = [int(v) for v in klayout_v_.split(" ")[-1].split(".")]
