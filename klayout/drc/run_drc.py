@@ -198,10 +198,7 @@ def get_list_of_tables(drc_dir: str):
     return [
         os.path.basename(f).replace(".drc", "")
         for f in glob.glob(os.path.join(drc_dir, "rule_decks", "*.drc"))
-        if "antenna" not in f
-        and "density" not in f
-        and "main" not in f
-        and "tail" not in f
+        if all(t not in f for t in ('antenna', 'density', 'main', 'tail'))
     ]
 
 
