@@ -312,7 +312,7 @@ def generate_klayout_switches(arguments, layout_path):
         switches["metal_level"] = "5LM"
     else:
         logging.error("variant switch allowed values are (A , B, C) only")
-        exit()
+        exit(1)
 
     if arguments["--verbose"]:
         switches["verbose"] = "true"
