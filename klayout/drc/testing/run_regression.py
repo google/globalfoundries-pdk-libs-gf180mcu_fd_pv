@@ -147,12 +147,7 @@ def get_switches(yaml_file, rule_name):
         except yaml.YAMLError as exc:
             print(exc)
 
-    switches = list()
-    for param, value in yaml_dic[rule_name].items():
-        switch = f"{param}={value}"
-        switches.append(switch)
-
-    return switches
+    return [f'{param}={value}' for param, value in yaml_dic[rule_name].items()]
 
 
 def parse_results_db(results_database):
@@ -752,12 +747,18 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df["in_rule_deck"] = df["in_rule_deck"].fillna(0)
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
-    df["rule_status"] = "Passed"
+    df["rule_status"] = "Unknown"
     df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
+    
+    pass_cond = (df["pass_patterns"] > 0) & (df["fail_patterns"] > 0) & \
+                (df["false_negative"] < 1) & (df["false_positive"] < 1) & \
+                (df["in_rule_deck"] > 0)
+
+    df.loc[pass_cond, "rule_status"] = "Rule Not Tested"
     df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
 
     return df
