@@ -198,7 +198,7 @@ def get_list_of_tables(drc_dir: str):
     return [
         os.path.basename(f).replace(".drc", "")
         for f in glob.glob(os.path.join(drc_dir, "rule_decks", "*.drc"))
-        if all(t not in f for t in ('antenna', 'density', 'main', 'tail'))
+        if all(t not in f for t in ("antenna", "density", "main", "tail"))
     ]
 
 
@@ -326,13 +326,17 @@ def check_klayout_version():
     klayout_v_list = []
 
     if klayout_v_ == "":
-        logging.error(f"Klayout is not found. Please make sure klayout is installed. Current version: {klayout_v_}")
+        logging.error(
+            f"Klayout is not found. Please make sure klayout is installed. Current version: {klayout_v_}"
+        )
         exit(1)
     else:
         klayout_v_list = [int(v) for v in klayout_v_.split(" ")[-1].split(".")]
 
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
-        logging.error(f"Was not able to get klayout version properly. Current version: {klayout_v_}")
+        logging.error(
+            f"Was not able to get klayout version properly. Current version: {klayout_v_}"
+        )
         exit(1)
     elif len(klayout_v_list) >= 2 and len(klayout_v_list) <= 3:
         if klayout_v_list[1] < 28:
@@ -341,7 +345,7 @@ def check_klayout_version():
                 "Using this klayout version has not been assesed in this development. Limits are unknown"
             )
             exit(1)
-    
+
     logging.info(f"Your Klayout version is: {klayout_v_}")
 
 
@@ -361,11 +365,15 @@ def check_layout_path(layout_path):
     """
 
     if not os.path.isfile(layout_path):
-        logging.error(f"## GDS file path {layout_path} provided doesn't exist or not a file.")
+        logging.error(
+            f"## GDS file path {layout_path} provided doesn't exist or not a file."
+        )
         exit(1)
 
     if ".gds" not in layout_path and ".oas" not in layout_path:
-        logging.error(f"## Layout {layout_path} is not in GDSII or OASIS format. Please use gds format.")
+        logging.error(
+            f"## Layout {layout_path} is not in GDSII or OASIS format. Please use gds format."
+        )
         exit(1)
 
     return os.path.abspath(layout_path)
@@ -380,7 +388,7 @@ def build_switches_string(sws: dict):
     sws : dict
         Dictionary that holds the Antenna swithces.
     """
-    return ' '.join(f'-rd {k}={v}' for k,v in sws.items())
+    return " ".join(f"-rd {k}={v}" for k, v in sws.items())
 
 
 def run_check(drc_file: str, drc_name: str, path: str, run_dir: str, sws: dict):
@@ -583,7 +591,9 @@ def main(drc_run_dir: str, arguments: dict):
     # Check gds file existance
     if not os.path.exists(arguments["--path"]):
         file_path = arguments["--path"]
-        logging.error(f"The input GDS file path {file_path} doesn't exist, please recheck.")
+        logging.error(
+            f"The input GDS file path {file_path} doesn't exist, please recheck."
+        )
         exit(1)
 
     rule_deck_full_path = os.path.dirname(os.path.abspath(__file__))
