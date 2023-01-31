@@ -421,12 +421,8 @@ def run_check(drc_file: str, drc_name: str, path: str, run_dir: str, sws: dict):
     new_sws["report"] = report_path
     sws_str = build_switches_string(new_sws)
     sws_str += f" -rd table_name={drc_name}"
-    # log_file = os.path.join(
-    #     run_dir, "{}_{}.log".format(layout_base_name, drc_name)
-    # )
 
     run_str = f"klayout -b -r {drc_file} {sws_str}"
-
     check_call(run_str, shell=True)
 
     return report_path

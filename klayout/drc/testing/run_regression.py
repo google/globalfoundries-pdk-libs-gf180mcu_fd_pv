@@ -53,7 +53,7 @@ SUPPORTED_SW_EXT = "yaml"
 RULE_LAY_NUM = 10000
 PATH_WIDTH = 0.01
 RULE_STR_SEP = "--"
-ANALYSIS_RULES = ["pass_patterns", "fail_patterns", "false_negative", "false_positive"]
+ANALYSIS_RULES = ["pass_patterns", "fail_patterns", "false_negative", "false_positive", "not_tested"]
 
 
 def get_unit_test_coverage(gds_file):
@@ -154,7 +154,7 @@ def parse_results_db(results_database):
     Returns
     -------
     set
-        A set that contains all rules in the database with violations
+        A set that contains all rules in the database with or without violations
     """
 
     mytree = ET.parse(results_database)
@@ -163,6 +163,12 @@ def parse_results_db(results_database):
     # Initial values for counter
     rule_counts = defaultdict(int)
 
+    # Get the list of all rules that ran regardless it generated output or not
+    for z in myroot[5]:
+        rule_name = f"{z[0].text}"
+        rule_counts[rule_name] = 0
+
+    # Count rules with violations.
     for z in myroot[7]:
         rule_name = f"{z[1].text}".replace("'", "")
         rule_counts[rule_name] += 1
@@ -230,8 +236,16 @@ def run_test_case(
         if len(pattern_results) < 1:
             logging.error("%s generated an exception: %s" % (pattern_clean, e))
             traceback.print_exc()
-            raise
-
+            raise Exception('Failed DRC run.')
+    
+    # dumping log into output to make CI have the log
+    if os.path.isfile(pattern_log):
+        logging.info("# Dumping drc run output log:")
+        with open(pattern_log, "r") as f:
+            for line in f:
+                line = line.strip()
+                logging.info(f"{line}")
+        
     # Checking if run is completed or failed
     pattern_results = glob.glob(os.path.join(output_loc, f"{pattern_clean}*.lyrdb"))
 
@@ -248,9 +262,29 @@ def run_test_case(
         # Generating final db file
         if os.path.exists(merged_output):
             final_report = f'{merged_output.split(".")[0]}_final.lyrdb'
-            call_str = f"klayout -b -r {runset_analysis} -rd input={merged_output} -rd report={final_report}"
-            check_call(call_str, shell=True)
+            analysis_log = f'{merged_output.split(".")[0]}_analysis.log'
+            call_str = f"klayout -b -r {runset_analysis} -rd input={merged_output} -rd report={final_report}  > {analysis_log} 2>&1"
+            
+            failed_analysis_step = False
 
+            try:
+                check_call(call_str, shell=True)
+            except Exception as e:
+                failed_analysis_step = True
+                logging.error("%s generated an exception: %s" % (pattern_clean, e))
+                traceback.print_exc()
+
+            # dumping log into output to make CI have the log
+            if os.path.isfile(analysis_log):
+                logging.info("# Dumping analysis run output log:")
+                with open(analysis_log, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        logging.info(f"{line}")
+            
+            if failed_analysis_step:
+                raise Exception('Failed DRC analysis run.')
+            
             if os.path.exists(final_report):
                 rule_counts = parse_results_db(final_report)
                 return rule_counts
@@ -388,38 +422,6 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
     df.to_csv(os.path.join(output_path, "rule_deck_rules.csv"), index=False)
     return df
 
-
-def analyze_test_patterns_coverage(rules_df, tc_df, output_path):
-    """
-    This function analyze the test patterns before running the test cases.
-
-    Parameters
-    ----------
-    rules_df : pd.DataFrame
-        DataFrame that holds all the rules that are found in the rule deck.
-    tc_df : pd.DataFrame
-        DataFrame that holds all the test cases and all the information required.
-    output_path : string or Path
-        Path of the run location to store the output analysis file.
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame with analysis of the rule testing coverage.
-    """
-    cov_df = (
-        tc_df[["table_name", "rule_name"]]
-        .groupby(["table_name", "rule_name"])
-        .count()
-        .reset_index(drop=False)
-    )
-    cov_df = cov_df.merge(rules_df, on="rule_name", how="outer")
-    cov_df["runset"].fillna("", inplace=True)
-    cov_df.to_csv(os.path.join(output_path, "testcases_coverage.csv"), index=False)
-
-    return cov_df
-
-
 def generate_merged_testcase(orignal_testcase, marker_testcase):
     """
     This function will merge orignal gds file with generated
@@ -550,6 +552,8 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     fail_marker2 = {fail_marker2}
     text_marker = {text_marker}
 
+    full_chip = extent.sized(0.0)
+
     '''
     analysis_rules.append(runset_analysis_setup)
 
@@ -627,6 +631,9 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     # Saving analysis rule deck.
     for r in rule_data_type_map:
         rule_lay_dt = rule_data_type_map.index(r) + 1
+        rule_layer_name = f'rule_{r.replace(".", "_")}'
+        rule_layer = f'{rule_layer_name} = input({RULE_LAY_NUM}, {rule_lay_dt})'
+
         pass_patterns_rule = f'''
         pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
         '''
@@ -634,16 +641,21 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
         fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
         '''
         false_pos_rule = f'''
-        pass_marker.interacting(text_marker.texts("{r}")).interacting(input({RULE_LAY_NUM}, {rule_lay_dt})).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
+        pass_marker.interacting(text_marker.texts("{r}")).interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
         '''
         false_neg_rule = f'''
-        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting(input({RULE_LAY_NUM}, {rule_lay_dt})).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
+        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
         '''
-
+        rule_not_tested = f'''
+        full_chip.not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}not_tested", "{r}{RULE_STR_SEP}not_tested occurred")
+        '''
+        
+        analysis_rules.append(rule_layer)
         analysis_rules.append(pass_patterns_rule)
         analysis_rules.append(fail_patterns_rule)
         analysis_rules.append(false_pos_rule)
         analysis_rules.append(false_neg_rule)
+        analysis_rules.append(rule_not_tested)
 
     for r in rules_tested:
         if r in rule_data_type_map:
@@ -742,17 +754,15 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df["rule_status"] = "Unknown"
     df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
-    df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
-    df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[(df["not_tested"] > 0), "rule_status"] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
+    df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
 
     pass_cond = (df["pass_patterns"] > 0) & (df["fail_patterns"] > 0) & \
                 (df["false_negative"] < 1) & (df["false_positive"] < 1) & \
                 (df["in_rule_deck"] > 0)
 
-    df.loc[pass_cond, "rule_status"] = "Rule Not Tested"
-    df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
-
+    df.loc[pass_cond, "rule_status"] = "Passed"
     return df
 
 
