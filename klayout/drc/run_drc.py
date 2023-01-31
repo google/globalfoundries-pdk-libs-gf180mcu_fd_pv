@@ -395,7 +395,7 @@ def check_layout_path(layout_path):
     """
 
     if not os.path.isfile(layout_path):
-        logging.error("## GDS file path provided doesn't exist or not a file.")
+        logging.error(f"## GDS file path {layout_path} provided doesn't exist or not a file.")
         exit(1)
 
     if ".gds" not in layout_path and ".oas" not in layout_path:
