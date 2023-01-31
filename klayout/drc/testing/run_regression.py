@@ -53,7 +53,13 @@ SUPPORTED_SW_EXT = "yaml"
 RULE_LAY_NUM = 10000
 PATH_WIDTH = 0.01
 RULE_STR_SEP = "--"
-ANALYSIS_RULES = ["pass_patterns", "fail_patterns", "false_negative", "false_positive"]
+ANALYSIS_RULES = [
+    "pass_patterns",
+    "fail_patterns",
+    "false_negative",
+    "false_positive",
+    "not_tested",
+]
 
 
 def get_unit_test_coverage(gds_file):
@@ -82,7 +88,9 @@ def get_unit_test_coverage(gds_file):
     for cell in top_cells:
         flatten_cell = cell.flatten()
         # Get all text labels for each cell
-        labels = flatten_cell.get_labels(apply_repetitions=True, depth=None, layer=lay_num, texttype=lay_dt)
+        labels = flatten_cell.get_labels(
+            apply_repetitions=True, depth=None, layer=lay_num, texttype=lay_dt
+        )
         # Get label value
         for label in labels:
             rule = label.text
@@ -112,16 +120,9 @@ def check_klayout_version():
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
         logging.error("Was not able to get klayout version properly.")
         exit(1)
-    elif len(klayout_v_list) == 2:
+    elif len(klayout_v_list) >= 2 or len(klayout_v_list) <= 3:
         if klayout_v_list[1] < 28:
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
-            logging.error(
-                "Using this klayout version has not been assesed in this development. Limits are unknown"
-            )
-            exit(1)
-    elif len(klayout_v_list) == 3:
-        if klayout_v_list[1] < 28 :
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
+            logging.error("Prerequisites at a minimum: KLayout 0.28.0")
             logging.error(
                 "Using this klayout version has not been assesed in this development. Limits are unknown"
             )
@@ -141,18 +142,13 @@ def get_switches(yaml_file, rule_name):
     """
 
     # load yaml config data
-    with open(yaml_file, 'r') as stream:
+    with open(yaml_file, "r") as stream:
         try:
             yaml_dic = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
 
-    switches = list()
-    for param, value in yaml_dic[rule_name].items():
-        switch = f"{param}={value}"
-        switches.append(switch)
-
-    return switches
+    return [f"{param}={value}" for param, value in yaml_dic[rule_name].items()]
 
 
 def parse_results_db(results_database):
@@ -167,7 +163,7 @@ def parse_results_db(results_database):
     Returns
     -------
     set
-        A set that contains all rules in the database with violations
+        A set that contains all rules in the database with or without violations
     """
 
     mytree = ET.parse(results_database)
@@ -176,6 +172,12 @@ def parse_results_db(results_database):
     # Initial values for counter
     rule_counts = defaultdict(int)
 
+    # Get the list of all rules that ran regardless it generated output or not
+    for z in myroot[5]:
+        rule_name = f"{z[0].text}"
+        rule_counts[rule_name] = 0
+
+    # Count rules with violations.
     for z in myroot[7]:
         rule_name = f"{z[1].text}".replace("'", "")
         rule_counts[rule_name] += 1
@@ -213,7 +215,9 @@ def run_test_case(
     rule_counts = defaultdict(int)
 
     # Get switches used for each run
-    sw_file = os.path.join(Path(layout_path.parent).absolute(), f"{table_name}.{SUPPORTED_SW_EXT}")
+    sw_file = os.path.join(
+        Path(layout_path.parent).absolute(), f"{table_name}.{SUPPORTED_SW_EXT}"
+    )
 
     if os.path.exists(sw_file):
         switches = " ".join(get_switches(sw_file, table_name))
@@ -243,7 +247,15 @@ def run_test_case(
         if len(pattern_results) < 1:
             logging.error("%s generated an exception: %s" % (pattern_clean, e))
             traceback.print_exc()
-            raise
+            raise Exception("Failed DRC run.")
+
+    # dumping log into output to make CI have the log
+    if os.path.isfile(pattern_log):
+        logging.info("# Dumping drc run output log:")
+        with open(pattern_log, "r") as f:
+            for line in f:
+                line = line.strip()
+                logging.info(f"{line}")
 
     # Checking if run is completed or failed
     pattern_results = glob.glob(os.path.join(output_loc, f"{pattern_clean}*.lyrdb"))
@@ -253,7 +265,9 @@ def run_test_case(
 
     if len(pattern_results) > 0:
         # db to gds conversion
-        marker_output, runset_analysis = convert_results_db_to_gds(pattern_results[0], rules_tested)
+        marker_output, runset_analysis = convert_results_db_to_gds(
+            pattern_results[0], rules_tested
+        )
 
         # Generating merged testcase for violated rules
         merged_output = generate_merged_testcase(layout_path, marker_output)
@@ -261,8 +275,28 @@ def run_test_case(
         # Generating final db file
         if os.path.exists(merged_output):
             final_report = f'{merged_output.split(".")[0]}_final.lyrdb'
-            call_str = f"klayout -b -r {runset_analysis} -rd input={merged_output} -rd report={final_report}"
-            check_call(call_str, shell=True)
+            analysis_log = f'{merged_output.split(".")[0]}_analysis.log'
+            call_str = f"klayout -b -r {runset_analysis} -rd input={merged_output} -rd report={final_report}  > {analysis_log} 2>&1"
+
+            failed_analysis_step = False
+
+            try:
+                check_call(call_str, shell=True)
+            except Exception as e:
+                failed_analysis_step = True
+                logging.error("%s generated an exception: %s" % (pattern_clean, e))
+                traceback.print_exc()
+
+            # dumping log into output to make CI have the log
+            if os.path.isfile(analysis_log):
+                logging.info("# Dumping analysis run output log:")
+                with open(analysis_log, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        logging.info(f"{line}")
+
+            if failed_analysis_step:
+                raise Exception("Failed DRC analysis run.")
 
             if os.path.exists(final_report):
                 rule_counts = parse_results_db(final_report)
@@ -317,26 +351,43 @@ def run_all_test_cases(tc_df, drc_dir, run_dir, num_workers):
             try:
                 rule_counts = future.result()
                 if rule_counts:
-                    rule_counts_df = pd.DataFrame({"analysis_rule": rule_counts.keys(), "count": rule_counts.values()})
-                    rule_counts_df["rule_name"] = rule_counts_df["analysis_rule"].str.split(RULE_STR_SEP).str[0]
-                    rule_counts_df["type"] = rule_counts_df["analysis_rule"].str.split(RULE_STR_SEP).str[1]
+                    rule_counts_df = pd.DataFrame(
+                        {
+                            "analysis_rule": rule_counts.keys(),
+                            "count": rule_counts.values(),
+                        }
+                    )
+                    rule_counts_df["rule_name"] = (
+                        rule_counts_df["analysis_rule"].str.split(RULE_STR_SEP).str[0]
+                    )
+                    rule_counts_df["type"] = (
+                        rule_counts_df["analysis_rule"].str.split(RULE_STR_SEP).str[1]
+                    )
                     rule_counts_df.drop(columns=["analysis_rule"], inplace=True)
                     rule_counts_df["count"] = rule_counts_df["count"].astype(int)
-                    rule_counts_df = rule_counts_df.pivot(index="rule_name",
-                                                          columns="type",
-                                                          values="count")
+                    rule_counts_df = rule_counts_df.pivot(
+                        index="rule_name", columns="type", values="count"
+                    )
                     rule_counts_df = rule_counts_df.fillna(0)
                     rule_counts_df = rule_counts_df.reset_index(drop=False)
-                    rule_counts_df = rule_counts_df.rename(columns={"index": "rule_name"})
+                    rule_counts_df = rule_counts_df.rename(
+                        columns={"index": "rule_name"}
+                    )
 
-                    rule_counts_df["table_name"] = tc_df.loc[tc_df["run_id"] == run_id, "table_name"].iloc[0]
+                    rule_counts_df["table_name"] = tc_df.loc[
+                        tc_df["run_id"] == run_id, "table_name"
+                    ].iloc[0]
 
                     for c in ANALYSIS_RULES:
                         if c not in rule_counts_df.columns:
                             rule_counts_df[c] = 0
 
-                    rule_counts_df[ANALYSIS_RULES] = rule_counts_df[ANALYSIS_RULES].astype(int)
-                    rule_counts_df = rule_counts_df[["table_name", "rule_name"] + ANALYSIS_RULES]
+                    rule_counts_df[ANALYSIS_RULES] = rule_counts_df[
+                        ANALYSIS_RULES
+                    ].astype(int)
+                    rule_counts_df = rule_counts_df[
+                        ["table_name", "rule_name"] + ANALYSIS_RULES
+                    ]
                     results_df_list.append(rule_counts_df)
                     tc_df.loc[tc_df["run_id"] == run_id, "run_status"] = "completed"
                 else:
@@ -377,9 +428,13 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
     if target_table is None:
         drc_files = glob.glob(os.path.join(rule_deck_path, "rule_decks", "*.drc"))
     else:
-        table_rule_file = os.path.join(rule_deck_path, "rule_decks", f"{target_table}.drc")
+        table_rule_file = os.path.join(
+            rule_deck_path, "rule_decks", f"{target_table}.drc"
+        )
         if not os.path.isfile(table_rule_file):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), table_rule_file)
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), table_rule_file
+            )
 
         drc_files = [table_rule_file]
 
@@ -391,7 +446,9 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
                 if ".output" in line:
                     line_list = line.split('"')
                     rule_info = dict()
-                    rule_info["table_name"] = os.path.basename(runset).replace(".drc", "")
+                    rule_info["table_name"] = os.path.basename(runset).replace(
+                        ".drc", ""
+                    )
                     rule_info["rule_name"] = line_list[1]
                     rule_info["in_rule_deck"] = 1
                     rules_data.append(rule_info)
@@ -400,37 +457,6 @@ def parse_existing_rules(rule_deck_path, output_path, target_table=None):
     df.drop_duplicates(inplace=True)
     df.to_csv(os.path.join(output_path, "rule_deck_rules.csv"), index=False)
     return df
-
-
-def analyze_test_patterns_coverage(rules_df, tc_df, output_path):
-    """
-    This function analyze the test patterns before running the test cases.
-
-    Parameters
-    ----------
-    rules_df : pd.DataFrame
-        DataFrame that holds all the rules that are found in the rule deck.
-    tc_df : pd.DataFrame
-        DataFrame that holds all the test cases and all the information required.
-    output_path : string or Path
-        Path of the run location to store the output analysis file.
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame with analysis of the rule testing coverage.
-    """
-    cov_df = (
-        tc_df[["table_name", "rule_name"]]
-        .groupby(["table_name", "rule_name"])
-        .count()
-        .reset_index(drop=False)
-    )
-    cov_df = cov_df.merge(rules_df, on="rule_name", how="outer")
-    cov_df["runset"].fillna("", inplace=True)
-    cov_df.to_csv(os.path.join(output_path, "testcases_coverage.csv"), index=False)
-
-    return cov_df
 
 
 def generate_merged_testcase(orignal_testcase, marker_testcase):
@@ -460,7 +486,9 @@ def generate_merged_testcase(orignal_testcase, marker_testcase):
     # Getting flattened top cells
     top_cell_org = lib_org.top_level()[0].flatten(apply_repetitions=True)
     top_cell_marker = lib_marker.top_level()[0].flatten(apply_repetitions=True)
-    marker_polygons = top_cell_marker.get_polygons(apply_repetitions=True, include_paths=True, depth=None)
+    marker_polygons = top_cell_marker.get_polygons(
+        apply_repetitions=True, include_paths=True, depth=None
+    )
 
     # Merging all polygons of markers with original testcase
     for marker_polygon in marker_polygons:
@@ -499,8 +527,8 @@ def draw_polygons(polygon_data, cell, lay_num, lay_dt, path_width):
     """
 
     # Cleaning data points
-    polygon_data = re.sub(r'\s+', '', polygon_data)
-    polygon_data = re.sub(r'[()]', '', polygon_data)
+    polygon_data = re.sub(r"\s+", "", polygon_data)
+    polygon_data = re.sub(r"[()]", "", polygon_data)
 
     tag_split = polygon_data.split(":")
     tag = tag_split[0]
@@ -510,17 +538,26 @@ def draw_polygons(polygon_data, cell, lay_num, lay_dt, path_width):
     # Select shape type to be drawn
     if tag == "polygon":
         for poly in polygons:
-            points = [(float(p.split(",")[0]), float(p.split(",")[1])) for p in poly.split(";")]
+            points = [
+                (float(p.split(",")[0]), float(p.split(",")[1]))
+                for p in poly.split(";")
+            ]
             cell.add(gdstk.Polygon(points, lay_num, lay_dt))
 
     elif tag == "edge-pair":
         for poly in polygons:
-            points = [(float(p.split(",")[0]), float(p.split(",")[1])) for p in poly.split(";")]
+            points = [
+                (float(p.split(",")[0]), float(p.split(",")[1]))
+                for p in poly.split(";")
+            ]
             cell.add(gdstk.FlexPath(points, path_width, layer=lay_num, datatype=lay_dt))
 
     elif tag == "edge":
         for poly in polygons:
-            points = [(float(p.split(",")[0]), float(p.split(",")[1])) for p in poly.split(";")]
+            points = [
+                (float(p.split(",")[0]), float(p.split(",")[1]))
+                for p in poly.split(";")
+            ]
             cell.add(gdstk.FlexPath(points, path_width, layer=lay_num, datatype=lay_dt))
     else:
         logging.error(f"## Unknown type: {tag} ignored")
@@ -555,7 +592,7 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     output_runset_path = f'{results_database.replace(".lyrdb", "")}_analysis.drc'
 
     analysis_rules = []
-    runset_analysis_setup = f'''
+    runset_analysis_setup = f"""
     source($input)
     report("DRC analysis run report at", $report)
     pass_marker = {pass_marker}
@@ -563,7 +600,9 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     fail_marker2 = {fail_marker2}
     text_marker = {text_marker}
 
-    '''
+    full_chip = extent.sized(0.0)
+
+    """
     analysis_rules.append(runset_analysis_setup)
 
     # Generating violated rules and its points
@@ -573,7 +612,7 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     in_item = False
     rule_data_type_map = list()
 
-    for ev, elem in tqdm(ET.iterparse(results_database, events=('start', 'end'))):
+    for ev, elem in tqdm(ET.iterparse(results_database, events=("start", "end"))):
 
         if elem.tag != "item" and not in_item:
             elem.clear()
@@ -640,37 +679,66 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
     # Saving analysis rule deck.
     for r in rule_data_type_map:
         rule_lay_dt = rule_data_type_map.index(r) + 1
-        pass_patterns_rule = f'''
-        pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
-        '''
-        fail_patterns_rule = f'''
-        fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
-        '''
-        false_pos_rule = f'''
-        pass_marker.interacting(text_marker.texts("{r}")).interacting(input({RULE_LAY_NUM}, {rule_lay_dt})).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
-        '''
-        false_neg_rule = f'''
-        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting(input({RULE_LAY_NUM}, {rule_lay_dt})).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
-        '''
+        rule_layer_name = f'rule_{r.replace(".", "_")}'
+        rule_layer = f"{rule_layer_name} = input({RULE_LAY_NUM}, {rule_lay_dt})"
 
+        pass_patterns_rule = f"""
+        pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
+        """
+        fail_patterns_rule = f"""
+        fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
+        """
+        false_pos_rule = f"""
+        pass_marker.interacting(text_marker.texts("{r}")).interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
+        """
+        false_neg_rule = f"""
+        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
+        """
+        rule_not_tested = f"""
+        full_chip.not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}not_tested", "{r}{RULE_STR_SEP}not_tested occurred")
+        """
+
+        analysis_rules.append(rule_layer)
         analysis_rules.append(pass_patterns_rule)
         analysis_rules.append(fail_patterns_rule)
         analysis_rules.append(false_pos_rule)
         analysis_rules.append(false_neg_rule)
+        analysis_rules.append(rule_not_tested)
+
+    rule_lay_dt = len(rule_data_type_map) + 1
 
     for r in rules_tested:
         if r in rule_data_type_map:
             continue
 
-        pass_patterns_rule = f'''
-        pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
-        '''
-        fail_patterns_rule = f'''
-        fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
-        '''
+        rule_layer_name = f'rule_{r.replace(".", "_")}'
+        rule_layer = f"{rule_layer_name} = input({RULE_LAY_NUM}, {rule_lay_dt})"
 
+        pass_patterns_rule = f"""
+        pass_marker.interacting( text_marker.texts("{r}") ).output("{r}{RULE_STR_SEP}pass_patterns", "{r}{RULE_STR_SEP}pass_patterns polygons")
+        """
+        fail_patterns_rule = f"""
+        fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")) ).or( fail_marker.interacting(text_marker.texts("{r}")).not_interacting(fail_marker2) ).output("{r}{RULE_STR_SEP}fail_patterns", "{r}{RULE_STR_SEP}fail_patterns polygons")
+        """
+
+        false_pos_rule = f"""
+        pass_marker.interacting(text_marker.texts("{r}")).interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_positive", "{r}{RULE_STR_SEP}false_positive occurred")
+        """
+        false_neg_rule = f"""
+        ((fail_marker2.interacting(fail_marker.interacting(text_marker.texts("{r}")))).or((fail_marker.interacting(input(11, 222).texts("{r}")).not_interacting(fail_marker2)))).not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}false_negative", "{r}{RULE_STR_SEP}false_negative occurred")
+        """
+        rule_not_tested = f"""
+        full_chip.not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}not_tested", "{r}{RULE_STR_SEP}not_tested occurred")
+        """
+
+        analysis_rules.append(rule_layer)
         analysis_rules.append(pass_patterns_rule)
         analysis_rules.append(fail_patterns_rule)
+        analysis_rules.append(false_pos_rule)
+        analysis_rules.append(false_neg_rule)
+        analysis_rules.append(rule_not_tested)
+
+        rule_lay_dt += 1
 
     with open(output_runset_path, "w") as runset_analysis:
         runset_analysis.write("".join(analysis_rules))
@@ -703,9 +771,7 @@ def build_tests_dataframe(unit_test_cases_dir, target_table):
 
     # Get test cases df from test cases
     tc_df = pd.DataFrame({"test_path": all_unit_test_cases})
-    tc_df["table_name"] = tc_df["test_path"].apply(
-        lambda x: x.name.replace(".gds", "")
-    )
+    tc_df["table_name"] = tc_df["test_path"].apply(lambda x: x.name.replace(".gds", ""))
 
     if target_table is not None:
         tc_df = tc_df[tc_df["table_name"] == target_table]
@@ -718,7 +784,9 @@ def build_tests_dataframe(unit_test_cases_dir, target_table):
     return tc_df
 
 
-def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: pd.DataFrame):
+def aggregate_results(
+    tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: pd.DataFrame
+):
     """
     aggregate_results Aggregate the results for all runs.
 
@@ -752,14 +820,36 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df["in_rule_deck"] = df["in_rule_deck"].fillna(0)
     df = df.merge(tc_df[["table_name", "run_status"]], how="left", on="table_name")
 
-    df["rule_status"] = "Passed"
+    df["rule_status"] = "Unknown"
     df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
-    df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
-    df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[
+        (df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"
+    ] = "Rule Not Tested"
+    df.loc[
+        (df["fail_patterns"] < 1) | (df["pass_patterns"] < 1), "rule_status"
+    ] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
-    df.loc[~(df["run_status"].isin(["completed"])), "rule_status"] = "Test Case Run Failed"
+    df.loc[
+        ~(df["run_status"].isin(["completed"])), "rule_status"
+    ] = "Test Case Run Failed"
 
+    df.loc[
+        (df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"
+    ] = "Rule Not Tested"
+
+    rule_exp_cond = ((df["fail_patterns"] > 0) & (df["false_negative"] > 0) & (df["not_tested"] > 0))
+    df.loc[rule_exp_cond, "rule_status"] = "Rule Syntax Exception"
+
+    pass_cond = (
+        (df["pass_patterns"] > 0)
+        & (df["fail_patterns"] > 0)
+        & (df["false_negative"] < 1)
+        & (df["false_positive"] < 1)
+        & (df["in_rule_deck"] > 0)
+    )
+
+    df.loc[pass_cond, "rule_status"] = "Passed"
     return df
 
 
@@ -787,7 +877,9 @@ def run_regression(drc_dir, output_path, target_table, cpu_count):
 
     ## Parse Existing Rules
     rules_df = parse_existing_rules(drc_dir, output_path, target_table)
-    logging.info("## Total number of rules found in rule decks: {}".format(len(rules_df)))
+    logging.info(
+        "## Total number of rules found in rule decks: {}".format(len(rules_df))
+    )
     logging.info("## Parsed Rules: \n" + str(rules_df))
 
     ## Get all test cases available in the repo.
@@ -808,14 +900,10 @@ def run_regression(drc_dir, output_path, target_table, cpu_count):
     logging.info("## Final analysis table: \n" + str(df))
 
     ## Generate error if there are any missing info or fails.
-    df.to_csv(
-        os.path.join(output_path, "all_test_cases_results.csv"), index=False
-    )
+    df.to_csv(os.path.join(output_path, "all_test_cases_results.csv"), index=False)
 
     ## Check if there any rules that generated false positive or false negative
-    failing_results = df[
-        ~df["rule_status"].isin(["Passed"])
-    ]
+    failing_results = df[~df["rule_status"].isin(["Passed"])]
     logging.info("## Failing test cases: \n" + str(failing_results))
 
     if len(failing_results) > 0:
@@ -866,9 +954,7 @@ def main(drc_dir: str, output_path: str, target_table: str):
     check_klayout_version()
 
     # Calling regression function
-    run_status = run_regression(
-        drc_dir, output_path, target_table, cpu_count
-    )
+    run_status = run_regression(drc_dir, output_path, target_table, cpu_count)
 
     #  End of execution time
     logging.info("Total execution time {}s".format(time.time() - t0))
@@ -912,13 +998,11 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         handlers=[
             logging.FileHandler(os.path.join(output_path, "{}.log".format(run_name))),
-            logging.StreamHandler()
+            logging.StreamHandler(),
         ],
         format="%(asctime)s | %(levelname)-7s | %(message)s",
         datefmt="%d-%b-%Y %H:%M:%S",
     )
 
     # Calling main function
-    run_status = main(
-        drc_dir, output_path, target_table
-    )
+    run_status = main(drc_dir, output_path, target_table)
