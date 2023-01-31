@@ -227,7 +227,7 @@ def get_run_top_cell_name(arguments, layout_path):
         layout_topcells = get_top_cell_names(layout_path)
         if len(layout_topcells) > 1:
             logging.error(
-                "## Layout has mutliple topcells. Please determine which topcell you want to run on."
+                "## Layout has multiple topcells. Please determine which topcell you want to run on."
             )
             exit(1)
         else:
