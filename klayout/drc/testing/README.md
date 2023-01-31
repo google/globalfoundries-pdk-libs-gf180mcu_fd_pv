@@ -5,10 +5,10 @@ Explains how to test GF180nm DRC rule deck.
 ## Folder Structure
 
 ```text
-📦testing
+📁testing
  ┣ 📜README.md                       (This file to document the regression)
  ┣ 📜run_regression.py               (Main regression script that runs the regression.)
- ┣ 📜testcases                       (All testcases)
+ ┣ 📁testcases                       (All testcases)
  ```
 
 ## Prerequisites
