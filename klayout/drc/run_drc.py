@@ -105,7 +105,7 @@ def check_drc_results(results_db_files: list):
 
     if len(full_violating_rules) > 0:
         logging.error("Klayout DRC run is not clean.")
-        logging.error("Violated rules are : {}\n".format(str(full_violating_rules)))
+        logging.error(f"Violated rules are : {str(full_violating_rules)}\n")
         exit(1)
     else:
         logging.info("Klayout DRC run is clean. GDS has no DRC violations.")
@@ -399,7 +399,7 @@ def check_layout_path(layout_path):
         exit(1)
 
     if ".gds" not in layout_path and ".oas" not in layout_path:
-        logging.error("## Layout is not in GDSII or OASIS format. Please use gds format.")
+        logging.error(f"## Layout {layout_path} is not in GDSII or OASIS format. Please use gds format.")
         exit(1)
 
     return os.path.abspath(layout_path)
@@ -414,11 +414,7 @@ def build_switches_string(sws: dict):
     sws : dict
         Dictionary that holds the Antenna swithces.
     """
-    switches_str = ""
-    for k in sws:
-        switches_str += "-rd {}={} ".format(k, sws[k])
-
-    return switches_str
+    return ' '.join(f'-rd {k}={v}' for k,v in sws.items())
 
 
 def run_check(drc_file: str, drc_name: str, path: str, run_dir: str, sws: dict):
