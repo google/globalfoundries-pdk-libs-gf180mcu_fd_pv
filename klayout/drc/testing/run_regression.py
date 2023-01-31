@@ -731,6 +731,7 @@ def convert_results_db_to_gds(results_database: str, rules_tested: list):
         full_chip.not_interacting({rule_layer_name}).output("{r}{RULE_STR_SEP}not_tested", "{r}{RULE_STR_SEP}not_tested occurred")
         """
 
+        analysis_rules.append(rule_layer)
         analysis_rules.append(pass_patterns_rule)
         analysis_rules.append(fail_patterns_rule)
         analysis_rules.append(false_pos_rule)
@@ -822,8 +823,12 @@ def aggregate_results(
     df["rule_status"] = "Unknown"
     df.loc[(df["false_negative"] > 0), "rule_status"] = "Rule Failed"
     df.loc[(df["false_positive"] > 0), "rule_status"] = "Rule Failed"
-    df.loc[(df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
-    df.loc[(df["fail_patterns"] < 1) | (df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
+    df.loc[
+        (df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"
+    ] = "Rule Not Tested"
+    df.loc[
+        (df["fail_patterns"] < 1) | (df["pass_patterns"] < 1), "rule_status"
+    ] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
     df.loc[
         ~(df["run_status"].isin(["completed"])), "rule_status"
