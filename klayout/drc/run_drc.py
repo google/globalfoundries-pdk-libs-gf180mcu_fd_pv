@@ -365,10 +365,8 @@ def check_klayout_version():
     else:
         klayout_v_list = [int(v) for v in klayout_v_.split(" ")[-1].split(".")]
 
-    logging.info(f"Your Klayout version is: {klayout_v_}")
-
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
-        logging.error("Was not able to get klayout version properly.")
+        logging.error(f"Was not able to get klayout version properly. Current version: {klayout_v_}")
         exit(1)
     elif len(klayout_v_list) == 2:
         if klayout_v_list[1] < 28:
@@ -384,6 +382,8 @@ def check_klayout_version():
                 "Using this klayout version has not been assesed in this development. Limits are unknown"
             )
             exit(1)
+    
+    logging.info(f"Your Klayout version is: {klayout_v_}")
 
 
 def check_layout_path(layout_path):
