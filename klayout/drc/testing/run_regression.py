@@ -838,7 +838,7 @@ def aggregate_results(
         (df["not_tested"] > 0) | (df["pass_patterns"] < 1), "rule_status"
     ] = "Rule Not Tested"
 
-    rule_exp_cond = ((df["fail_patterns"] > 0) & (df["false_negative"] > 0) & (df["not_test"] > 0))
+    rule_exp_cond = ((df["fail_patterns"] > 0) & (df["false_negative"] > 0) & (df["not_tested"] > 0))
     df.loc[rule_exp_cond, "rule_status"] = "Rule Syntax Exception"
 
     pass_cond = (
