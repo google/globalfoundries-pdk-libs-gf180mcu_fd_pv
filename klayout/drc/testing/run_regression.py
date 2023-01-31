@@ -112,21 +112,13 @@ def check_klayout_version():
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
         logging.error("Was not able to get klayout version properly.")
         exit(1)
-    elif len(klayout_v_list) == 2:
+    elif len(klayout_v_list) >= 2 or len(klayout_v_list) <= 3:
         if klayout_v_list[1] < 28:
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
+            logging.error("Prerequisites at a minimum: KLayout 0.28.0")
             logging.error(
                 "Using this klayout version has not been assesed in this development. Limits are unknown"
             )
             exit(1)
-    elif len(klayout_v_list) == 3:
-        if klayout_v_list[1] < 28 :
-            logging.warning("Prerequisites at a minimum: KLayout 0.28.0")
-            logging.error(
-                "Using this klayout version has not been assesed in this development. Limits are unknown"
-            )
-            exit(1)
-
 
 def get_switches(yaml_file, rule_name):
     """Parse yaml file and extract switches data
@@ -753,7 +745,7 @@ def aggregate_results(tc_df: pd.DataFrame, results_df: pd.DataFrame, rules_df: p
     df.loc[(df["pass_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["fail_patterns"] < 1), "rule_status"] = "Rule Not Tested"
     df.loc[(df["in_rule_deck"] < 1), "rule_status"] = "Rule Not Implemented"
-    
+
     pass_cond = (df["pass_patterns"] > 0) & (df["fail_patterns"] > 0) & \
                 (df["false_negative"] < 1) & (df["false_positive"] < 1) & \
                 (df["in_rule_deck"] > 0)
