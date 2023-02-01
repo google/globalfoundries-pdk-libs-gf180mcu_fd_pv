@@ -44,7 +44,7 @@ from tqdm import tqdm
 import re
 import gdstk
 import errno
-
+import numpy as np
 from collections import defaultdict
 
 
@@ -547,9 +547,14 @@ def draw_polygons(polygon_data, cell, lay_num, lay_dt, path_width):
     elif tag == "edge-pair":
         for poly in polygons:
             points = [
-                (float(p.split(",")[0]), float(p.split(",")[1]))
+                [float(p.split(",")[0]), float(p.split(",")[1])]
                 for p in poly.split(";")
             ]
+            dist = np.sqrt( ( (points[0][0]) - (points[1][0]) )**2 + ( (points[0][1]) - (points[1][1]) )**2 )
+            # Adding condition for extremely small edge length
+            ## to generate a path to be drawn
+            if dist < path_width:
+                points[1][0] = points[0][0] + 2*path_width
             cell.add(gdstk.FlexPath(points, path_width, layer=lay_num, datatype=lay_dt))
 
     elif tag == "edge":
