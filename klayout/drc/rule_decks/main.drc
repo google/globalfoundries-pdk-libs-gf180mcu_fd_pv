@@ -19,6 +19,7 @@
 #===========================================================================================================================
 require 'time'
 require "logger"
+require 'etc'
 
 exec_start_time = Time.now
 
@@ -123,19 +124,18 @@ logger.info("Offgrid enabled  %s" % [OFFGRID])
 
 if $thr
     threads($thr)
-    logger.info("Number of threads to use %s" % [$thr])
 else
-    threads(%x("nproc"))
-    logger.info("Number of threads to use #{%x("nproc")}")
+    thr ||=  Etc.nprocessors
+    threads(thr)
 end
+logger.info("Number of threads to use %s" % [$thr])
 
 #=== PRINT DETAILS ===
+logger.info("Verbose mode: #{$verbose}")
 if $verbose == "true"
-  logger.info("Verbose mode: #{$verbose}")
   verbose(true)
 else
   verbose(false)
-  logger.info("Verbose mode: false")
 end
 
 # === TILING MODE ===
@@ -197,11 +197,8 @@ polygons_count = 0
 logger.info("Read in polygons from layers.")
 
 def get_polygons(l, d)
-  if $run_mode == "deep"
-    polygons(l, d)
-  else
-    polygons(l, d).merged
-  end
+  ps = polygons(l, d)
+  return $run_mode == "deep" ? ps : ps.merged
 end
 
 comp           = get_polygons(22 , 0 )
@@ -543,7 +540,7 @@ if METAL_LEVEL == "2LM"
   logger.info("metal2_dummy has %d polygons" % [count])
   polygons_count  += count
 
-  metal2        = metal2_drawn + metal2_drawn
+  metal2        = metal2_drawn + metal2_dummy
 
   metal2_label  = get_polygons(36 , 10)
   count   = metal2_label.count()
@@ -923,7 +920,7 @@ ntap_dn         = ntap.and(dnwell_n)
 psd_dn          = pcomp.and(dnwell_n).interacting(pgate_dn).not(pgate_dn).not(res_mk)
 nsd_dn          = ncomp.and(dnwell_p).interacting(ngate_dn).not(ngate_dn).not(res_mk)
 
-natcompsd	 = (nat       & comp.interacting(poly2)) - tgate
+natcomp        	= nat.and(comp)
 
 # Gate
 nom_gate = tgate.not(dualgate)
@@ -969,7 +966,7 @@ if CONNECTIVITY_RULES
   connect(lvpwell_dn, pcomp)
 
   connect(nwell,  ncomp)
-  connect(natcompsd,  contact)
+  connect(natcomp,  contact)
   connect(mvsd,  ncomp)
   connect(mvpsd,  pcomp)
   connect(contact,  metal1)
