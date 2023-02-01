@@ -539,7 +539,7 @@ if METAL_LEVEL == "2LM"
   logger.info("metal2_dummy has %d polygons" % [count])
   polygons_count  += count
 
-  metal2        = metal2_drawn + metal2_drawn
+  metal2        = metal2_drawn + metal2_dummy
 
   metal2_label  = get_polygons(36 , 10)
   count   = metal2_label.count()
