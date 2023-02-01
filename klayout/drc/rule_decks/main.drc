@@ -196,11 +196,8 @@ polygons_count = 0
 logger.info("Read in polygons from layers.")
 
 def get_polygons(l, d)
-  if $run_mode == "deep"
-    polygons(l, d)
-  else
-    polygons(l, d).merged
-  end
+  ps = polygons(l, d)
+  return $run_mode == "deep" ? ps : ps.merged
 end
 
 comp           = get_polygons(22 , 0 )
