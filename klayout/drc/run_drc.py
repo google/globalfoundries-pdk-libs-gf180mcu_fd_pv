@@ -227,7 +227,7 @@ def get_run_top_cell_name(arguments, layout_path):
         layout_topcells = get_top_cell_names(layout_path)
         if len(layout_topcells) > 1:
             logging.error(
-                "## Layout has multiple topcells. Please determine which topcell you want to run on."
+                "## Layout has multiple topcells. Please use --topcell to determine which topcell you want to run on."
             )
             exit(1)
         else:
@@ -472,7 +472,6 @@ def run_parallel_run(
         drc_path = os.path.join(rule_deck_full_path, "rule_decks", "density.drc")
         list_rule_deck_files["density"] = drc_path
 
-    ## list_res_db_files.append(run_check(drc_path, "antenna", layout_path, drc_run_dir, switches))
     if not arguments["--table"]:
         list_of_tables = get_list_of_tables(rule_deck_full_path)
     else:
