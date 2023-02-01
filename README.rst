@@ -1,5 +1,3 @@
-[![code linting](https://github.com/efabless/globalfoundries-pdk-libs-gf180mcu_fd_pv/actions/workflows/linting.yml/badge.svg)](https://github.com/efabless/globalfoundries-pdk-libs-gf180mcu_fd_pv/actions/workflows/linting.yml)
-
 GlobalFoundries 180nm MCU Physical Verification library
 =======================================================
 
