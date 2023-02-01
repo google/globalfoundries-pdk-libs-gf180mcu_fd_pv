@@ -130,12 +130,11 @@ else
 end
 
 #=== PRINT DETAILS ===
+logger.info("Verbose mode: #{$verbose}")
 if $verbose == "true"
-  logger.info("Verbose mode: #{$verbose}")
   verbose(true)
 else
   verbose(false)
-  logger.info("Verbose mode: false")
 end
 
 # === TILING MODE ===
