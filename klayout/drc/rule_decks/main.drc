@@ -923,7 +923,7 @@ ntap_dn         = ntap.and(dnwell_n)
 psd_dn          = pcomp.and(dnwell_n).interacting(pgate_dn).not(pgate_dn).not(res_mk)
 nsd_dn          = ncomp.and(dnwell_p).interacting(ngate_dn).not(ngate_dn).not(res_mk)
 
-natcompsd	 = (nat       & comp.interacting(poly2)) - tgate
+natcomp        	= nat.and(comp)
 
 # Gate
 nom_gate = tgate.not(dualgate)
@@ -969,7 +969,7 @@ if CONNECTIVITY_RULES
   connect(lvpwell_dn, pcomp)
 
   connect(nwell,  ncomp)
-  connect(natcompsd,  contact)
+  connect(natcomp,  contact)
   connect(mvsd,  ncomp)
   connect(mvpsd,  pcomp)
   connect(contact,  metal1)
