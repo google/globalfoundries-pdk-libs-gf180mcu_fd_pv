@@ -42,6 +42,7 @@ if FEOL
     dv3_l1.forget
 
     # rule DV.4 is not a DRC check
+    # Refer to: https://gf180mcu-pdk.readthedocs.io/en/latest/physical_verification/design_manual/drm_07_07.html
 
     # Rule DV.5: Min. Dualgate width. is 0.7µm
     logger.info("Executing rule DV.5")
