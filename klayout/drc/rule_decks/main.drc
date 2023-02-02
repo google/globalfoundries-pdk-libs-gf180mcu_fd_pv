@@ -33,9 +33,6 @@ end
 #================================================
 #----------------- FILE SETUP -------------------
 #================================================
-
-# optional for a batch launch :   klayout -b -r gf_018mcu.drc -rd input=design.gds -rd report=gp180_drc.lyrdb
-
 logger.info("Starting running GF180MCU Klayout DRC runset on %s" % [$input])
 logger.info("Ruby Version for klayout: %s" % [RUBY_VERSION])
 
