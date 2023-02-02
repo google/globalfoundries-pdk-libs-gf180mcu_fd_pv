@@ -22,6 +22,9 @@ REQUIREMENTS_FILE := requirements.txt
 # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 ENVIRONMENT_FILE := pdk_regression.yml
 
+# Path to regression
+KLAYOUT_TESTS := klayout/drc/testing/
+
 include third_party/make-env/conda.mk
 
 # Lint python code
@@ -31,21 +34,32 @@ lint: | $(CONDA_ENV_PYTHON)
 ################################################################################
 ## DRC Regression section
 ################################################################################
-# DRC main testing
-test-DRC-main: | $(CONDA_ENV_PYTHON)
-	@$(IN_CONDA_ENV) klayout -v
+#=================================
+# ----- test-DRC_regression ------
+#=================================
+.ONESHELL:
+test-DRC-main : | $(CONDA_ENV_PYTHON) 
+	@$(IN_CONDA_ENV) python3 $(KLAYOUT_TESTS)/run_regression.py
 
-# DRC main testing
+.ONESHELL:
+test-DRC-% : | $(CONDA_ENV_PYTHON)
+	@which python3
+	@$(IN_CONDA_ENV) python3 $(KLAYOUT_TESTS)/run_regression.py --table=$*
+
+#=================================
+# -------- test-DRC-switch -------
+#=================================
+# LVS main testing
 test-DRC-switch: | $(CONDA_ENV_PYTHON)
 	@$(IN_CONDA_ENV) klayout -v
 
 ################################################################################
-## DRC Regression section
+## LVS Regression section
 ################################################################################
-# DRC main testing
+# LVS main testing
 test-LVS-main: | $(CONDA_ENV_PYTHON)
 	@$(IN_CONDA_ENV) klayout -v
 
-# DRC main testing
+# LVS main testing
 test-LVS-switch: | $(CONDA_ENV_PYTHON)
 	@$(IN_CONDA_ENV) klayout -v
