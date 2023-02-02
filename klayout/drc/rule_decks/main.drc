@@ -57,8 +57,10 @@ if $report
     logger.info("GF180MCU Klayout DRC runset output at: %s" % [$report])
     report("DRC Run Report at", $report)
 else
-    logger.info("GF180MCU Klayout DRC runset output at default location: %s" % [File.join(File.dirname(RBA::CellView::active.filename), "gf180_drc.lyrdb")])
-    report("DRC Run Report at", File.join(File.dirname(RBA::CellView::active.filename), "gf180_drc.lyrdb"))
+    layout_dir = Pathname.new(RBA::CellView::active.filename).parent.realpath
+    report_path = layout_dir.join("gf180_drc.lyrdb").to_s
+    logger.info("GF180MCU Klayout DRC runset output at default location: %s" % report_path)
+    report("DRC Run Report at", report_path)
 end
 
 #================================================
