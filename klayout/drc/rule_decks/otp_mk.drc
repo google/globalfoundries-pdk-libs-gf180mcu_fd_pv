@@ -86,6 +86,7 @@ if FEOL
     osb4_l1.forget
 
     # rule O.SB.5a is not a DRC check
+    ## Please refer to https://gf180mcu-pdk.readthedocs.io/en/latest/physical_verification/design_manual/drm_10_10.html
 
     # Rule O.SB.5b_LV: Min. space from salicide block to unrelated Poly2 on COMP. is 0.1µm
     logger.info("Executing rule O.SB.5b_LV")
@@ -94,6 +95,7 @@ if FEOL
     osb5b_l1.forget
 
     # rule O.SB.5b_MV is not a DRC check
+    ## Please refer to https://gf180mcu-pdk.readthedocs.io/en/latest/physical_verification/design_manual/drm_10_10.html
 
     # Rule O.SB.9: Min. salicide block extension beyond unsalicided Poly2. is 0.1µm
     logger.info("Executing rule O.SB.9")
