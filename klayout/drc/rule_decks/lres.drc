@@ -20,16 +20,18 @@ if FEOL
     #----------------N+ POLY RESISTOR----------------
     #================================================
 
+    logger.info("Starting LRES derivations")
     lres_poly = poly2.and(nplus).interacting(sab).interacting(res_mk)
+
     # Rule LRES.1: Minimum width of Poly2 resistor. is 0.8µm
     logger.info("Executing rule LRES.1")
-    lres1_l1  = lres_poly.width(0.8.um, euclidian).polygons(0.001)
+    lres1_l1  = lres_poly.width(0.8.um, euclidian)
     lres1_l1.output("LRES.1", "LRES.1 : Minimum width of Poly2 resistor. : 0.8µm")
     lres1_l1.forget
 
     # Rule LRES.2: Minimum space between Poly2 resistors. is 0.4µm
     logger.info("Executing rule LRES.2")
-    lres2_l1  = lres_poly.isolated(0.4.um, euclidian).polygons(0.001)
+    lres2_l1  = lres_poly.isolated(0.4.um, euclidian)
     lres2_l1.output("LRES.2", "LRES.2 : Minimum space between Poly2 resistors. : 0.4µm")
     lres2_l1.forget
 
@@ -41,7 +43,7 @@ if FEOL
 
     # Rule LRES.4: Minimum space from Poly2 resistor to unrelated Poly2. is 0.6µm
     logger.info("Executing rule LRES.4")
-    lres4_l1  = lres_poly.separation(poly2.not_interacting(sab), 0.6.um, euclidian).polygons(0.001)
+    lres4_l1  = lres_poly.separation(poly2.not_interacting(sab), 0.6.um, euclidian)
     lres4_l1.output("LRES.4", "LRES.4 : Minimum space from Poly2 resistor to unrelated Poly2. : 0.6µm")
     lres4_l1.forget
 
@@ -57,7 +59,7 @@ if FEOL
 
     # Rule LRES.6: Minimum salicide block overlap of Poly2 resistor in width direction. is 0.28µm
     logger.info("Executing rule LRES.6")
-    lres6_l1 = sab.enclosing(lres_poly,0.28.um).polygons(0.001)
+    lres6_l1 = lres_poly.enclosed(sab,0.28.um)
     lres6_l1.output("LRES.6", "LRES.6 : Minimum salicide block overlap of Poly2 resistor in width direction. : 0.28µm")
     lres6_l1.forget
 
@@ -73,7 +75,8 @@ if FEOL
     lres7_l2.forget
     cont_lres7.forget
 
-    # rule LRES.8 is not a DRC check
+    # Rule LRES.8 is not a DRC check
+    ## Please refer to https://gf180mcu-pdk.readthedocs.io/en/latest/physical_verification/design_manual/drm_10_02.html#n-poly-resistor-low-sheet-rho
 
     # Rule LRES.9a: Nplus Poly2 resistor shall be covered by RES_MK marking. RES_MK length shall be coincide with resistor length (Defined by SAB length) and width covering the width of Poly2.
     logger.info("Executing rule LRES.9a")
@@ -81,17 +84,16 @@ if FEOL
     lres9a_l1 = res_mk.interacting(lres_poly).interacting(mk_lres9)
     lres9a_l1.output("LRES.9a", "LRES.9a : Nplus Poly2 resistor shall be covered by RES_MK marking. RES_MK length shall be coincide with resistor length (Defined by SAB length) and width covering the width of Poly2. ")
     lres9a_l1.forget
-
     mk_lres9.forget
 
-    # Rule LRES.9b: If the size of single RES_MK mark layer is greater than 15000um2 and both side (X and Y) are greater than 80um. then the minimum spacing to adjacent RES_MK layer. is 20µm
+    # Rule LRES.9b: If the size of single RES_MK mark layer is greater than 15000um2 and both side (X and Y) are greater than 80um. 
+    ## then the minimum spacing to adjacent RES_MK layer. is 20µm
     logger.info("Executing rule LRES.9b")
-    lres9b = res_mk.with_area(15000.01.um,nil).edges.with_length(80.01.um,nil)
-    lres9b_l1 = lres9b.separation(res_mk.edges, 20.um).polygons(0.001)
+    lres9b = res_mk.with_area(15000.001.um,nil).edges.with_length(80.001.um,nil)
+    lres9b_l1 = lres9b.separation(res_mk.edges, 20.um)
     lres9b_l1.output("LRES.9b", "LRES.9b : If the size of single RES_MK mark layer is greater than 15000um2 and both side (X and Y) are greater than 80um. then the minimum spacing to adjacent RES_MK layer. : 20µm")
     lres9b_l1.forget
     lres9b.forget
-
     lres_poly.forget
 
 end #FEOL
