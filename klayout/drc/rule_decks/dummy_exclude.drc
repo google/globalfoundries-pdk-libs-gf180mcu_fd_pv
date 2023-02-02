@@ -19,25 +19,25 @@
 #================================================
 
 # rule DE.1 is not a DRC check
+## Please refer to https://gf180mcu-pdk.readthedocs.io/en/latest/physical_verification/design_manual/drm_10_08.html#design-rules-for-dummy-exclude-layers-ndmy-and-pmndmy
 
 # Rule DE.2: Minimum NDMY or PMNDMY size (x or y dimension in um). is 0.8µm
 logger.info("Executing rule DE.2")
-de2_l1  = ndmy.or(pmndmy).width(0.8.um, euclidian).polygons(0.001)
+de2_l1  = ndmy.or(pmndmy).width(0.8.um, euclidian)
 de2_l1.output("DE.2", "DE.2 : Minimum NDMY or PMNDMY size (x or y dimension in um). : 0.8µm")
 de2_l1.forget
 
-de3_ndmy_area = ndmy.with_area(15000.um, nil)
-# Rule DE.3: If size greater than 15000 um2 then two sides should not be greater than (um).
+# Rule DE.3: If size greater than 15000 um2 then two sides should not be greater than (80 um).
 logger.info("Executing rule DE.3")
-de3_l1 = de3_ndmy_area.edges.with_length(80.um, nil).not_interacting(de3_ndmy_area.edges.with_length(nil, 80.um))
-de3_l1.output("DE.3", "DE.3 : If size greater than 15000 um2 then two sides should not be greater than (um).")
+de3_ndmy_area = ndmy.with_area(15000.um, nil)
+de3_l1 = de3_ndmy_area.edges.with_length(80.001.um, nil)
+de3_l1.output("DE.3", "DE.3 : If size greater than 15000 um2 then two sides should not be greater than (80 um).")
 de3_l1.forget
-
 de3_ndmy_area.forget
 
 # Rule DE.4: Minimum NDMY to NDMY space (Merge if space is less). is 20µm
 logger.info("Executing rule DE.4")
-de4_l1  = ndmy.space(20.um, euclidian).polygons(0.001)
+de4_l1  = ndmy.space(20.um, euclidian)
 de4_l1.output("DE.4", "DE.4 : Minimum NDMY to NDMY space (Merge if space is less). : 20µm")
 de4_l1.forget
 
