@@ -560,7 +560,7 @@ def draw_polygons(polygon_data, cell, lay_num, lay_dt, path_width):
     elif tag == "edge":
         for poly in polygons:
             points = [
-                (float(p.split(",")[0]), float(p.split(",")[1]))
+                [float(p.split(",")[0]), float(p.split(",")[1])]
                 for p in poly.split(";")
             ]
             dist = np.sqrt(((points[0][0]) - (points[1][0]))**2 + ((points[0][1]) - (points[1][1]))**2)
