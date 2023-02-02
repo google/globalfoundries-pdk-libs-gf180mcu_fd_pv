@@ -820,7 +820,7 @@ else
         top_metal     = metaltop
         topmin1_metal = metal5
       else
-        logger.errors("Unknown metal stack %s" % [METAL_LEVEL])
+        logger.error("Unknown metal stack %s" % [METAL_LEVEL])
         raise
       end
     end
@@ -1013,7 +1013,7 @@ def conn_space(layer,conn_val,not_conn_val, mode)
     net1 = l2n_data.probe_net(layer.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer.data, ep.second.p1)
     if !net1 || !net2
-      puts "Should not happen ..."
+      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
     elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
       # unconnected
       unconnected_errors.data.insert(ep)
@@ -1035,7 +1035,7 @@ def conn_separation(layer1, layer2, conn_val,not_conn_val, mode)
     net1 = l2n_data.probe_net(layer1.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer2.data, ep.second.p1)
     if !net1 || !net2
-      puts "Should not happen ..."
+      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
     elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
       # unconnected
       unconnected_errors.data.insert(ep)
