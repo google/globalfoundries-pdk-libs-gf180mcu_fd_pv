@@ -33,9 +33,6 @@ end
 #================================================
 #----------------- FILE SETUP -------------------
 #================================================
-
-# optional for a batch launch :   klayout -b -r gf_018mcu.drc -rd input=design.gds -rd report=gp180_drc.lyrdb
-
 logger.info("Starting running GF180MCU Klayout DRC runset on %s" % [$input])
 logger.info("Ruby Version for klayout: %s" % [RUBY_VERSION])
 
@@ -60,8 +57,10 @@ if $report
     logger.info("GF180MCU Klayout DRC runset output at: %s" % [$report])
     report("DRC Run Report at", $report)
 else
-    logger.info("GF180MCU Klayout DRC runset output at default location." % [File.join(File.dirname(RBA::CellView::active.filename), "gf180_drc.lyrdb")])
-    report("DRC Run Report at", File.join(File.dirname(RBA::CellView::active.filename), "gf180_drc.lyrdb"))
+    layout_dir = Pathname.new(RBA::CellView::active.filename).parent.realpath
+    report_path = layout_dir.join("gf180_drc.lyrdb").to_s
+    logger.info("GF180MCU Klayout DRC runset output at default location: %s" % report_path)
+    report("DRC Run Report at", report_path)
 end
 
 #================================================
@@ -754,8 +753,7 @@ else
         topmin1_via   = via3
         top_metal     = metal5
         topmin1_metal = metal4
-      else 
-        ## 6LM
+      elsif METAL_LEVEL == "6LM"
         metal5_drawn   = get_polygons(81 , 0 )
         count   = metal5_drawn.count()
         logger.info("metal5_drawn has %d polygons" % [count])
@@ -820,6 +818,9 @@ else
         topmin1_via   = via4
         top_metal     = metaltop
         topmin1_metal = metal5
+      else
+        logger.error("Unknown metal stack %s" % [METAL_LEVEL])
+        raise
       end
     end
   end
@@ -1011,7 +1012,7 @@ def conn_space(layer,conn_val,not_conn_val, mode)
     net1 = l2n_data.probe_net(layer.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer.data, ep.second.p1)
     if !net1 || !net2
-      puts "Should not happen ..."
+      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
     elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
       # unconnected
       unconnected_errors.data.insert(ep)
@@ -1033,7 +1034,7 @@ def conn_separation(layer1, layer2, conn_val,not_conn_val, mode)
     net1 = l2n_data.probe_net(layer1.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer2.data, ep.second.p1)
     if !net1 || !net2
-      puts "Should not happen ..."
+      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
     elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
       # unconnected
       unconnected_errors.data.insert(ep)
