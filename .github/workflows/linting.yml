@@ -21,12 +21,20 @@ on:
 jobs:
   lint_python:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 12
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - name: Lint with flake8
         run: |
-          make lint
+          make lint_python
+
+  lint_ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Lint with rubocop
+        run: |
+          make lint_ruby

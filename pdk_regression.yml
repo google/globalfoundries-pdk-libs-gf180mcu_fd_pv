@@ -5,6 +5,7 @@ channels:
 dependencies:
   - klayout
   - python
+  - ruby
   - pip
   - pip:
     - -r requirements.txt
