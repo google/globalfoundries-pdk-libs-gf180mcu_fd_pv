@@ -14,10 +14,6 @@
 # limitations under the License.
 ################################################################################################
 
-
-
 exec_end_time = Time.now
 run_time = exec_end_time - exec_start_time
-logger.info("%s DRC Total Run time %f seconds" % [table_name, run_time])
-
-
+logger.info("#{$table_name} DRC Total Run time #{run_time} seconds")

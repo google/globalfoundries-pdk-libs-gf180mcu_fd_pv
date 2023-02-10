@@ -45,7 +45,6 @@ jobs:
     needs: build_drc-matrix
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       fail-fast: false
       matrix:
         part: [drc]
@@ -64,7 +63,6 @@ jobs:
   drc_switch:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       fail-fast: false
       matrix:
         include:
@@ -83,7 +81,6 @@ jobs:
   lvs_regression:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       fail-fast: false
       matrix:
         include:
