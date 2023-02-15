@@ -1,7 +1,7 @@
 # Globalfoundries 180nm MCU DRC Tests
 
 
-## **Folder Structure**
+## Folder Structure
 
 ```text
 📁 testcases

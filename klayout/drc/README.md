@@ -2,7 +2,7 @@
 
 Explains how to use the runset.
 
-## **Folder Structure**
+## Folder Structure
 
 ```text
 📁 drc
@@ -88,5 +88,8 @@ You could find the run results at your run directory if you previously specified
  ```
 
 The result is a database file (`<your_design_name>.lyrdb`) contains all violations. 
-You could view it on your file using: `klayout <input_gds_file> -m <resut_db_file> `, or you could view it via makrer browser option in tools menu using klayout GUI.
+You could view it on your file using: `klayout <input_gds_file> -m <resut_db_file> `, or you could view it on your gds file via marker browser option in tools menu using klayout GUI as shown below.
+
+![image](https://user-images.githubusercontent.com/91015308/219004873-be7c1e81-7085-4e82-8cd4-8303bc021e13.png)
+
 
