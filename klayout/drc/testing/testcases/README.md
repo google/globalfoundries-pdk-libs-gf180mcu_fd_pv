@@ -1,4 +1,4 @@
-# Globalfoundries 180nm MCU DRC Unit Tests
+# Globalfoundries 180nm MCU DRC Tests
 
 
 ## **Folder Structure**
@@ -10,4 +10,8 @@
     ┣ 📜<table_name>.gds                Test cases per table.
     ┣ 📜<table_name>.svg                SVG file per table.
     ┣ 📜<table_name>.yaml               yaml file contains switches per table. [if required]
+ ┣ 📁 switch_checking                Contains a small test case to be used for testing the DRC switches.
+ ┣ 📁 torture                        Contains a few large test cases to test the performance of the rule deck. 
+
  ```
+ 

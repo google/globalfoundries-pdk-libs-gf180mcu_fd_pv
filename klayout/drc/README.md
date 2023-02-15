@@ -15,7 +15,7 @@ Explains how to use the runset.
 ## **Prerequisites**
 You need the following set of tools installed to be able to run GF180MCU DRC:
 - Python 3.6+
-- KLayout 0.28.0+
+- KLayout 0.28.4+
 
 ## **Usage**
 
