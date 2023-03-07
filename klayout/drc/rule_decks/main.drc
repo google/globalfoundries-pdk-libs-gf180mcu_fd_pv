@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ################################################################################################
 # Copyright 2022 GlobalFoundries PDK Authors
 #
@@ -813,14 +815,14 @@ natcomp        	= nat.and(comp)
 nom_gate = tgate.not(dualgate)
 thick_gate = tgate.and(dualgate)
 
-ngate_56V = ngate.and(dualgate)
-pgate_56V = pgate.and(dualgate)
+ngate_56v = ngate.and(dualgate)
+pgate_56v = pgate.and(dualgate)
 
-ngate_5V = ngate_56V.and(v5_xtor)
-pgate_5V = pgate_56V.and(v5_xtor)
+ngate_5v = ngate_56v.and(v5_xtor)
+pgate_5v = pgate_56v.and(v5_xtor)
 
-ngate_6V = ngate_56V.not(v5_xtor)
-pgate_6V = pgate_56V.not(v5_xtor)
+ngate_6v = ngate_56v.not(v5_xtor)
+pgate_6v = pgate_56v.not(v5_xtor)
 
 # DNWELL
 dnwell_3p3v = dnwell.not_interacting(v5_xtor).not_interacting(dualgate)
@@ -885,46 +887,67 @@ end
 #------------ PRE-DEFINED FUNCTIONS -------------
 #================================================
 
-def conn_space(layer, conn_val, not_conn_val, mode)
-  raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+def unconn_errors(net1, net2, unconnected_errors)
+  if !net1 || !net2
+    logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
+  elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
+    # unconnected
+    unconnected_errors.data.insert(ep)
+  end
+  unconnected_errors
+end
 
-  connected_output = layer.space(conn_val.um, mode).polygons(0.001)
+def conn_space_check(layer, not_conn_val, mode)
   unconnected_errors_unfiltered = layer.space(not_conn_val.um, mode)
-  singularity_errors = layer.space(0.001.um)
+  connected_output = layer.space(conn_val.um, mode).polygons(0.001.um)
+  singularity_errors = layer.space(0.001.um, mode).polygons(0.001.um)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
     net1 = l2n_data.probe_net(layer.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer.data, ep.second.p1)
-    if !net1 || !net2
-      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
-    elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
-      # unconnected
-      unconnected_errors.data.insert(ep)
-    end
+    unconnected_errors = unconn_errors(net1, net2, unconnected_errors)
   end
-  unconnected_output = unconnected_errors.polygons.or(singularity_errors.polygons(0.001))
+  [connected_output, unconnected_errors, singularity_errors]
+end
+
+def conn_space(layer, conn_val, not_conn_val, mode)
+  if layer.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
+    connected_output   = layer.nets.space(conn_val.um, mode, props_eq).polygons(0.001.um)
+    singularity_errors = layer.nets.space(0.001.um, mode).polygons(0.001.um)
+    unconnected_output = layer.nets.space(not_conn_val.um, mode, props_ne).polygons(0.001.um).join(singularity_errors)
+  else
+    raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+
+    connected_output, unconnected_errors, singularity_errors = conn_space_check(layer, not_conn_val, mode)
+    unconnected_output = unconnected_errors.polygons.join(singularity_errors)
+  end
   [connected_output, unconnected_output]
 end
 
-def conn_separation(layer1, layer2, conn_val, not_conn_val, mode)
-  raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
-
-  connected_output = layer1.separation(layer2, conn_val.um, mode).polygons(0.001)
+def conn_separation_check(_layer, not_conn_val, mode)
   unconnected_errors_unfiltered = layer1.separation(layer2, not_conn_val.um, mode)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
     net1 = l2n_data.probe_net(layer1.data, ep.first.p1)
     net2 = l2n_data.probe_net(layer2.data, ep.second.p1)
-    if !net1 || !net2
-      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
-    elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
-      # unconnected
-      unconnected_errors.data.insert(ep)
-    end
+    unconnected_errors = unconn_errors(net1, net2, unconnected_errors)
   end
-  unconnected_output = unconnected_errors.polygons(0.001)
+  unconnected_errors
+end
+
+def conn_separation(layer1, layer2, conn_val, not_conn_val, mode)
+  if layer1.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
+    connected_output   = layer1.nets.separation(layer2.nets, conn_val.um,     mode, props_eq).polygons(0.001.um)
+    unconnected_output = layer1.nets.separation(layer2.nets, not_conn_val.um, mode, props_ne).polygons(0.001.um)
+  else
+    raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+
+    connected_output = layer1.separation(layer2, conn_val.um, mode).polygons(0.001.um)
+    unconnected_errors = conn_separation_check(layer, not_conn_val, mode)
+    unconnected_output = unconnected_errors.polygons(0.001.um)
+  end
   [connected_output, unconnected_output]
 end
 
