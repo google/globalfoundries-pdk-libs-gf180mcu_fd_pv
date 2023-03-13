@@ -515,6 +515,37 @@ count = metal2_blk.count
 logger.info("metal2_blk has #{count} polygons")
 polygons_count += count
 
+case METAL_LEVEL
+when '2LM'
+    top_via       = via1
+    topmin1_via   = contact
+    top_metal     = metal2
+    topmin1_metal = metal1
+when '3LM'
+  top_via       = via2
+  topmin1_via   = via1
+  top_metal     = metal3
+  topmin1_metal = metal2
+when '4LM'
+  top_via       = via3
+  topmin1_via   = via2
+  top_metal     = metal4
+  topmin1_metal = metal3
+when '5LM'
+  top_via       = via4
+  topmin1_via   = via3
+  top_metal     = metal5
+  topmin1_metal = metal4
+when '6LM'
+  top_via       = via5
+  topmin1_via   = via4
+  top_metal     = metaltop
+  topmin1_metal = metal5
+else
+  logger.error("Unknown metal stack #{METAL_LEVEL}")
+  raise
+end
+
 if METAL_LEVEL == '2LM'
 
   top_via       = via1
@@ -562,6 +593,7 @@ else
     topmin1_via   = via1
     top_metal     = metal3
     topmin1_metal = metal2
+
   else
 
     via3 = get_polygons(40, 0)
@@ -887,7 +919,7 @@ end
 #------------ PRE-DEFINED FUNCTIONS -------------
 #================================================
 
-def unconn_errors(net1, net2, unconnected_errors)
+def unconn_errors_check(net1, net2, unconnected_errors)
   if !net1 || !net2
     logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
   elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
@@ -897,41 +929,62 @@ def unconn_errors(net1, net2, unconnected_errors)
   unconnected_errors
 end
 
-def conn_space_check(layer, not_conn_val, mode)
-  unconnected_errors_unfiltered = layer.space(not_conn_val.um, mode)
+def get_nets(_data, layer1, layer2, edge_pairs)
+  net1 = l2n_data.probe_net(layer1.data, edge_pairs.first.p1)
+  net2 = l2n_data.probe_net(layer2.data, edge_pairs.second.p1)
+  [net1, net2]
+end
+
+def conn_space_viol(layer, conn_val, mode)
   connected_output = layer.space(conn_val.um, mode).polygons(0.001.um)
   singularity_errors = layer.space(0.001.um, mode).polygons(0.001.um)
+  [connected_output, singularity_errors]
+end
+
+def conn_space_check(layer, not_conn_val, mode)
+  unconnected_errors_unfiltered = layer.space(not_conn_val.um, mode)
+  connected_output, singularity_errors = conn_space_viol(layer, conn_val, mode)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
-    net1 = l2n_data.probe_net(layer.data, ep.first.p1)
-    net2 = l2n_data.probe_net(layer.data, ep.second.p1)
-    unconnected_errors = unconn_errors(net1, net2, unconnected_errors)
+    net1, net2 = get_nets(l2n_data, layer, layer, ep)
+    unconnected_errors = unconn_errors_check(net1, net2, unconnected_errors)
   end
-  [connected_output, unconnected_errors, singularity_errors]
+  unconnected_output = unconnected_errors.polygons.join(singularity_errors)
+  [connected_output, unconnected_output]
+end
+
+def conn_space_nets(layer, conn_val, not_conn_val, mode)
+  nets = layer.nets
+  connected_output = nets.space(conn_val.um, mode, props_eq).polygons(0.001.um)
+  singularity_errors = nets.space(0.001.um, mode).polygons(0.001.um)
+  unconnected_output = nets.space(not_conn_val.um, mode, props_ne).polygons(0.001.um).join(singularity_errors)
+  [connected_output, unconnected_output]
 end
 
 def conn_space(layer, conn_val, not_conn_val, mode)
   if layer.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
-    connected_output   = layer.nets.space(conn_val.um, mode, props_eq).polygons(0.001.um)
-    singularity_errors = layer.nets.space(0.001.um, mode).polygons(0.001.um)
-    unconnected_output = layer.nets.space(not_conn_val.um, mode, props_ne).polygons(0.001.um).join(singularity_errors)
+    connected_output, unconnected_output = conn_space_nets(layer, conn_val, not_conn_val, mode)
   else
     raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
 
-    connected_output, unconnected_errors, singularity_errors = conn_space_check(layer, not_conn_val, mode)
-    unconnected_output = unconnected_errors.polygons.join(singularity_errors)
+    connected_output, unconnected_output = conn_space_check(layer, not_conn_val, mode)
   end
   [connected_output, unconnected_output]
 end
 
-def conn_separation_check(_layer, not_conn_val, mode)
+def sep_viol_nets(layer1, layer2, conn_val, not_conn_val, mode)
+  connected_output   = layer1.nets.separation(layer2.nets, conn_val.um,     mode, props_eq).polygons(0.001.um)
+  unconnected_output = layer1.nets.separation(layer2.nets, not_conn_val.um, mode, props_ne).polygons(0.001.um)
+  [connected_output, unconnected_output]
+end
+
+def unconn_separation_check(layer1, layer2, not_conn_val, mode)
   unconnected_errors_unfiltered = layer1.separation(layer2, not_conn_val.um, mode)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
-    net1 = l2n_data.probe_net(layer1.data, ep.first.p1)
-    net2 = l2n_data.probe_net(layer2.data, ep.second.p1)
+    net1, net2 = get_nets(l2n_data, layer1, layer2, ep)
     unconnected_errors = unconn_errors(net1, net2, unconnected_errors)
   end
   unconnected_errors
@@ -939,13 +992,12 @@ end
 
 def conn_separation(layer1, layer2, conn_val, not_conn_val, mode)
   if layer1.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
-    connected_output   = layer1.nets.separation(layer2.nets, conn_val.um,     mode, props_eq).polygons(0.001.um)
-    unconnected_output = layer1.nets.separation(layer2.nets, not_conn_val.um, mode, props_ne).polygons(0.001.um)
+    connected_output, unconnected_output = sep_viol_nets(layer1, layer2, conn_val, not_conn_val, mode)
   else
     raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
 
     connected_output = layer1.separation(layer2, conn_val.um, mode).polygons(0.001.um)
-    unconnected_errors = conn_separation_check(layer, not_conn_val, mode)
+    unconnected_errors = unconn_separation_check(layer1, layer2, not_conn_val, mode)
     unconnected_output = unconnected_errors.polygons(0.001.um)
   end
   [connected_output, unconnected_output]

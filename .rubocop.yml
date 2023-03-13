@@ -17,10 +17,6 @@ UselessAssignment:
   Description: Useless assignment to variable.
   Enabled: false
 
-Metrics/AbcSize:
-  Description: Assignment Branch Condition size for conn_space is too high.
-  Enabled: false
-
 Metrics/BlockNesting:
   Description:  Avoid more than 3 levels of block nesting.
   Enabled: false
