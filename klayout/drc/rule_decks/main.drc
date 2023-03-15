@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ################################################################################################
 # Copyright 2022 GlobalFoundries PDK Authors
 #
@@ -513,15 +515,8 @@ count = metal2_blk.count
 logger.info("metal2_blk has #{count} polygons")
 polygons_count += count
 
-if METAL_LEVEL == '2LM'
-
-  top_via       = via1
-  topmin1_via   = contact
-  top_metal     = metal2
-  topmin1_metal = metal1
-
-else
-
+case METAL_LEVEL
+when '3LM', '4LM', '5LM', '6LM'
   via2 = get_polygons(38, 0)
   count = via2.count
   logger.info("via2 has #{count} polygons")
@@ -553,163 +548,142 @@ else
   count = metal3_blk.count
   logger.info("metal3_blk has #{count} polygons")
   polygons_count += count
+end
 
-  if METAL_LEVEL == '3LM'
+case METAL_LEVEL
+when '4LM', '5LM', '6LM'
+  via3 = get_polygons(40, 0)
+  count = via3.count
+  logger.info("via3 has #{count} polygons")
+  polygons_count += count
 
-    top_via       = via2
-    topmin1_via   = via1
-    top_metal     = metal3
-    topmin1_metal = metal2
-  else
+  metal4_drawn = get_polygons(46, 0)
+  count = metal4_drawn.count
+  logger.info("metal4_drawn has #{count} polygons")
+  polygons_count += count
 
-    via3 = get_polygons(40, 0)
-    count = via3.count
-    logger.info("via3 has #{count} polygons")
-    polygons_count += count
+  metal4_dummy = get_polygons(46, 4)
+  count = metal4_dummy.count
+  logger.info("metal4_dummy has #{count} polygons")
+  polygons_count += count
 
-    metal4_drawn = get_polygons(46, 0)
-    count = metal4_drawn.count
-    logger.info("metal4_drawn has #{count} polygons")
-    polygons_count += count
+  metal4 = metal4_drawn + metal4_dummy
 
-    metal4_dummy = get_polygons(46, 4)
-    count = metal4_dummy.count
-    logger.info("metal4_dummy has #{count} polygons")
-    polygons_count += count
+  metal4_label = get_polygons(46, 10)
+  count = metal4_label.count
+  logger.info("metal4_label has #{count} polygons")
+  polygons_count += count
 
-    metal4 = metal4_drawn + metal4_dummy
+  metal4_slot = get_polygons(46, 3)
+  count = metal4_slot.count
+  logger.info("metal4_slot has #{count} polygons")
+  polygons_count += count
 
-    metal4_label = get_polygons(46, 10)
-    count = metal4_label.count
-    logger.info("metal4_label has #{count} polygons")
-    polygons_count += count
+  metal4_blk = get_polygons(46, 5)
+  count = metal4_blk.count
+  logger.info("metal4_blk has #{count} polygons")
+  polygons_count += count
+end
 
-    metal4_slot = get_polygons(46, 3)
-    count = metal4_slot.count
-    logger.info("metal4_slot has #{count} polygons")
-    polygons_count += count
+case METAL_LEVEL
+when '5LM', '6LM'
+  via4 = get_polygons(41, 0)
+  count = via4.count
+  logger.info("via4 has #{count} polygons")
+  polygons_count += count
 
-    metal4_blk = get_polygons(46, 5)
-    count = metal4_blk.count
-    logger.info("metal4_blk has #{count} polygons")
-    polygons_count += count
+  metal5_drawn = get_polygons(81, 0)
+  count = metal5_drawn.count
+  logger.info("metal5_drawn has #{count} polygons")
+  polygons_count += count
 
-    if METAL_LEVEL == '4LM'
+  metal5_dummy = get_polygons(81, 4)
+  count = metal5_dummy.count
+  logger.info("metal5_dummy has #{count} polygons")
+  polygons_count += count
 
-      top_via       = via3
-      topmin1_via   = via2
-      top_metal     = metal4
-      topmin1_metal = metal3
-    else
+  metal5 = metal5_drawn + metal5_dummy
 
-      via4 = get_polygons(41, 0)
-      count = via4.count
-      logger.info("via4 has #{count} polygons")
-      polygons_count += count
+  metal5_label = get_polygons(81, 10)
+  count = metal5_label.count
+  logger.info("metal5_label has #{count} polygons")
+  polygons_count += count
 
-      case METAL_LEVEL
-      when '5LM'
-        metal5_drawn = get_polygons(81, 0)
-        count = metal5_drawn.count
-        logger.info("metal5_drawn has #{count} polygons")
-        polygons_count += count
+  metal5_slot = get_polygons(81, 3)
+  count = metal5_slot.count
+  logger.info("metal5_slot has #{count} polygons")
+  polygons_count += count
 
-        metal5_dummy = get_polygons(81, 4)
-        count = metal5_dummy.count
-        logger.info("metal5_dummy has #{count} polygons")
-        polygons_count += count
+  metal5_blk = get_polygons(81, 5)
+  count = metal5_blk.count
+  logger.info("metal5_blk has #{count} polygons")
+  polygons_count += count
+end
 
-        metal5 = metal5_drawn + metal5_dummy
+case METAL_LEVEL
+when '6LM'
+  via5 = get_polygons(82, 0)
+  count = via5.count
+  logger.info("via5 has #{count} polygons")
+  polygons_count += count
 
-        metal5_label = get_polygons(81, 10)
-        count = metal5_label.count
-        logger.info("metal5_label has #{count} polygons")
-        polygons_count += count
+  metaltop_drawn = get_polygons(53, 0)
+  count = metaltop_drawn.count
+  logger.info("metaltop_drawn has #{count} polygons")
+  polygons_count += count
 
-        metal5_slot = get_polygons(81, 3)
-        count = metal5_slot.count
-        logger.info("metal5_slot has #{count} polygons")
-        polygons_count += count
+  metaltop_dummy = get_polygons(53, 4)
+  count = metaltop_dummy.count
+  logger.info("metaltop_dummy has #{count} polygons")
+  polygons_count += count
 
-        metal5_blk = get_polygons(81, 5)
-        count = metal5_blk.count
-        logger.info("metal5_blk has #{count} polygons")
-        polygons_count += count
+  metaltop       = metaltop_drawn + metaltop_dummy
 
-        top_via       = via4
-        topmin1_via   = via3
-        top_metal     = metal5
-        topmin1_metal = metal4
-      when '6LM'
-        metal5_drawn = get_polygons(81, 0)
-        count = metal5_drawn.count
-        logger.info("metal5_drawn has #{count} polygons")
-        polygons_count += count
+  metaltop_label = get_polygons(53, 10)
+  count = metaltop_label.count
+  logger.info("metaltop_label has #{count} polygons")
+  polygons_count += count
 
-        metal5_dummy = get_polygons(81, 4)
-        count = metal5_dummy.count
-        logger.info("metal5_dummy has #{count} polygons")
-        polygons_count += count
+  metaltop_slot = get_polygons(53, 3)
+  count = metaltop_slot.count
+  logger.info("metaltop_slot has #{count} polygons")
+  polygons_count += count
 
-        metal5         = metal5_drawn + metal5_dummy
+  metalt_blk = get_polygons(53, 5)
+  count = metalt_blk.count
+  logger.info("metalt_blk has #{count} polygons")
+  polygons_count += count
+end
 
-        metal5_label = get_polygons(81, 10)
-        count = metal5_label.count
-        logger.info("metal5_label has #{count} polygons")
-        polygons_count += count
-
-        metal5_slot = get_polygons(81, 3)
-        count = metal5_slot.count
-        logger.info("metal5_slot has #{count} polygons")
-        polygons_count += count
-
-        metal5_blk = get_polygons(81, 5)
-        count = metal5_blk.count
-        logger.info("metal5_blk has #{count} polygons")
-        polygons_count += count
-
-        via5 = get_polygons(82, 0)
-        count = via5.count
-        logger.info("via5 has #{count} polygons")
-        polygons_count += count
-
-        metaltop_drawn = get_polygons(53, 0)
-        count = metaltop_drawn.count
-        logger.info("metaltop_drawn has #{count} polygons")
-        polygons_count += count
-
-        metaltop_dummy = get_polygons(53, 4)
-        count = metaltop_dummy.count
-        logger.info("metaltop_dummy has #{count} polygons")
-        polygons_count += count
-
-        metaltop       = metaltop_drawn + metaltop_dummy
-
-        metaltop_label = get_polygons(53, 10)
-        count = metaltop_label.count
-        logger.info("metaltop_label has #{count} polygons")
-        polygons_count += count
-
-        metaltop_slot = get_polygons(53, 3)
-        count = metaltop_slot.count
-        logger.info("metaltop_slot has #{count} polygons")
-        polygons_count += count
-
-        metalt_blk = get_polygons(53, 5)
-        count = metalt_blk.count
-        logger.info("metalt_blk has #{count} polygons")
-        polygons_count += count
-
-        top_via       = via5
-        topmin1_via   = via4
-        top_metal     = metaltop
-        topmin1_metal = metal5
-      else
-        logger.error("Unknown metal stack #{METAL_LEVEL}")
-        raise
-      end
-    end
-  end
+case METAL_LEVEL
+when '2LM'
+  top_via       = via1
+  topmin1_via   = contact
+  top_metal     = metal2
+  topmin1_metal = metal1
+when '3LM'
+  top_via       = via2
+  topmin1_via   = via1
+  top_metal     = metal3
+  topmin1_metal = metal2
+when '4LM'
+  top_via       = via3
+  topmin1_via   = via2
+  top_metal     = metal4
+  topmin1_metal = metal3
+when '5LM'
+  top_via       = via4
+  topmin1_via   = via3
+  top_metal     = metal5
+  topmin1_metal = metal4
+when '6LM'
+  top_via       = via5
+  topmin1_via   = via4
+  top_metal     = metaltop
+  topmin1_metal = metal5
+else
+  logger.error("Unknown metal stack #{METAL_LEVEL}")
+  raise
 end
 
 pad = get_polygons(37, 0)
@@ -813,14 +787,14 @@ natcomp        	= nat.and(comp)
 nom_gate = tgate.not(dualgate)
 thick_gate = tgate.and(dualgate)
 
-ngate_56V = ngate.and(dualgate)
-pgate_56V = pgate.and(dualgate)
+ngate_56v = ngate.and(dualgate)
+pgate_56v = pgate.and(dualgate)
 
-ngate_5V = ngate_56V.and(v5_xtor)
-pgate_5V = pgate_56V.and(v5_xtor)
+ngate_5v = ngate_56v.and(v5_xtor)
+pgate_5v = pgate_56v.and(v5_xtor)
 
-ngate_6V = ngate_56V.not(v5_xtor)
-pgate_6V = pgate_56V.not(v5_xtor)
+ngate_6v = ngate_56v.not(v5_xtor)
+pgate_6v = pgate_56v.not(v5_xtor)
 
 # DNWELL
 dnwell_3p3v = dnwell.not_interacting(v5_xtor).not_interacting(dualgate)
@@ -859,72 +833,113 @@ if CONNECTIVITY_RULES
   connect(contact, metal1)
   connect(metal1,  via1)
   connect(via1,    metal2)
-  if METAL_LEVEL != '2LM'
+  case METAL_LEVEL
+  when '3LM', '4LM', '5LM', '6LM'
     connect(metal2,  via2)
     connect(via2,    metal3)
-
-    if METAL_LEVEL != '3LM'
-      connect(metal3,  via3)
-      connect(via3,    metal4)
-
-      if METAL_LEVEL != '4LM'
-        connect(metal4,  via4)
-        connect(via4,    metal5)
-
-        if METAL_LEVEL != '5LM'
-          connect(metal5,  via5)
-          connect(via5,    metaltop)
-        end
-      end
-    end
   end
-
+  case METAL_LEVEL
+  when '4LM', '5LM', '6LM'
+    connect(metal3,  via3)
+    connect(via3,    metal4)
+  end
+  case METAL_LEVEL
+  when '5LM', '6LM'
+    connect(metal4,  via4)
+    connect(via4,    metal5)
+  end
+  case METAL_LEVEL
+  when '6LM'
+    connect(metal5,  via5)
+    connect(via5,    metaltop)
+  end
 end
 
 #================================================
 #------------ PRE-DEFINED FUNCTIONS -------------
 #================================================
 
-def conn_space(layer, conn_val, not_conn_val, mode)
-  raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+def unconn_errors_check(net1, net2, unconnected_errors)
+  if !net1 || !net2
+    logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
+  elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
+    # unconnected
+    unconnected_errors.data.insert(ep)
+  end
+  unconnected_errors
+end
 
-  connected_output = layer.space(conn_val.um, mode).polygons(0.001)
+def get_nets(_data, layer1, layer2, edge_pairs)
+  net1 = l2n_data.probe_net(layer1.data, edge_pairs.first.p1)
+  net2 = l2n_data.probe_net(layer2.data, edge_pairs.second.p1)
+  [net1, net2]
+end
+
+def conn_space_viol(layer, conn_val, mode)
+  connected_output = layer.space(conn_val.um, mode).polygons(0.001.um)
+  singularity_errors = layer.space(0.001.um, mode).polygons(0.001.um)
+  [connected_output, singularity_errors]
+end
+
+def conn_space_check(layer, not_conn_val, mode)
   unconnected_errors_unfiltered = layer.space(not_conn_val.um, mode)
-  singularity_errors = layer.space(0.001.um)
+  connected_output, singularity_errors = conn_space_viol(layer, conn_val, mode)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
-    net1 = l2n_data.probe_net(layer.data, ep.first.p1)
-    net2 = l2n_data.probe_net(layer.data, ep.second.p1)
-    if !net1 || !net2
-      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
-    elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
-      # unconnected
-      unconnected_errors.data.insert(ep)
-    end
+    net1, net2 = get_nets(l2n_data, layer, layer, ep)
+    unconnected_errors = unconn_errors_check(net1, net2, unconnected_errors)
   end
-  unconnected_output = unconnected_errors.polygons.or(singularity_errors.polygons(0.001))
+  unconnected_output = unconnected_errors.polygons.join(singularity_errors)
   [connected_output, unconnected_output]
 end
 
-def conn_separation(layer1, layer2, conn_val, not_conn_val, mode)
-  raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+def conn_space_nets(layer, conn_val, not_conn_val, mode)
+  nets = layer.nets
+  connected_output = nets.space(conn_val.um, mode, props_eq).polygons(0.001.um)
+  singularity_errors = nets.space(0.001.um, mode).polygons(0.001.um)
+  unconnected_output = nets.space(not_conn_val.um, mode, props_ne).polygons(0.001.um).join(singularity_errors)
+  [connected_output, unconnected_output]
+end
 
-  connected_output = layer1.separation(layer2, conn_val.um, mode).polygons(0.001)
+def conn_space(layer, conn_val, not_conn_val, mode)
+  if layer.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
+    connected_output, unconnected_output = conn_space_nets(layer, conn_val, not_conn_val, mode)
+  else
+    raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+
+    connected_output, unconnected_output = conn_space_check(layer, not_conn_val, mode)
+  end
+  [connected_output, unconnected_output]
+end
+
+def sep_viol_nets(layer1, layer2, conn_val, not_conn_val, mode)
+  connected_output   = layer1.nets.separation(layer2.nets, conn_val.um,     mode, props_eq).polygons(0.001.um)
+  unconnected_output = layer1.nets.separation(layer2.nets, not_conn_val.um, mode, props_ne).polygons(0.001.um)
+  [connected_output, unconnected_output]
+end
+
+def unconn_separation_check(layer1, layer2, not_conn_val, mode)
   unconnected_errors_unfiltered = layer1.separation(layer2, not_conn_val.um, mode)
   # Filter out the errors arising from the same net
   unconnected_errors = DRC::DRCLayer.new(self, RBA::EdgePairs.new)
   unconnected_errors_unfiltered.data.each do |ep|
-    net1 = l2n_data.probe_net(layer1.data, ep.first.p1)
-    net2 = l2n_data.probe_net(layer2.data, ep.second.p1)
-    if !net1 || !net2
-      logger.error("Connectivity check encountered 2 nets that doesn't exist. Potential issue in klayout...")
-    elsif net1.circuit != net2.circuit || net1.cluster_id != net2.cluster_id
-      # unconnected
-      unconnected_errors.data.insert(ep)
-    end
+    net1, net2 = get_nets(l2n_data, layer1, layer2, ep)
+    unconnected_errors = unconn_errors(net1, net2, unconnected_errors)
   end
-  unconnected_output = unconnected_errors.polygons(0.001)
+  unconnected_errors
+end
+
+def conn_separation(layer1, layer2, conn_val, not_conn_val, mode)
+  if layer1.respond_to?(:nets) # KLayout version (>=0.28.4) which supports "nets"
+    connected_output, unconnected_output = sep_viol_nets(layer1, layer2, conn_val, not_conn_val, mode)
+  else
+    raise 'ERROR : Wrong connectivity implementation' if conn_val > not_conn_val
+
+    connected_output = layer1.separation(layer2, conn_val.um, mode).polygons(0.001.um)
+    unconnected_errors = unconn_separation_check(layer1, layer2, not_conn_val, mode)
+    unconnected_output = unconnected_errors.polygons(0.001.um)
+  end
   [connected_output, unconnected_output]
 end
 
