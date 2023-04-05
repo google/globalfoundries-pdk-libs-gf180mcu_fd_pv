@@ -22,7 +22,9 @@ if FEOL
   #================================================
 
   logger.info('Starting LRES derivations')
-  lres_poly = poly2.and(nplus).interacting(sab).interacting(res_mk)
+
+  poly_nplus = poly2.and(nplus)
+  lres_poly = poly_nplus.interacting(sab).interacting(res_mk)
 
   # Rule LRES.1: Minimum width of Poly2 resistor is 0.8µm.
   logger.info('Executing rule LRES.1')
@@ -83,7 +85,7 @@ if FEOL
   ## RES_MK length shall be coincide with resistor length (Defined by SAB length)
   ## and width covering the width of Poly2.
   logger.info('Executing rule LRES.9a')
-  mk_lres9 = res_mk.edges.not(poly2.and(nplus).and(sab).edges).inside_part(poly2)
+  mk_lres9 = res_mk.edges.not(poly_nplus.and(sab).edges).inside_part(poly2)
   lres9a_l1 = res_mk.interacting(lres_poly).interacting(mk_lres9)
   lres9a_l1.output('LRES.9a',
                    'LRES.9a : Nplus Poly2 resistor shall be covered by RES_MK marking.
@@ -91,6 +93,7 @@ if FEOL
                     and width covering the width of Poly2. ')
   lres9a_l1.forget
   mk_lres9.forget
+  poly_nplus.forget
 
   # Rule LRES.9b: If the size of single RES_MK mark layer is greater than 15000um2
   ## and both side (X and Y) are greater than 80um.
