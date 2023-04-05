@@ -22,8 +22,8 @@ if FEOL
   #================================================
 
   logger.info('Starting HRES derivations')
-  hres_poly = poly2.interacting(pplus).interacting(sab).interacting(res_mk).interacting(resistor)
   hres1_poly = poly2.interacting(pplus).interacting(sab).interacting(res_mk)
+  hres_poly = hres1_poly.interacting(resistor)
 
   # Rule HRES.1: Minimum space is 0.4µm. Note: Merge if the spacing is less than 0.4 um.
   logger.info('Executing rule HRES.1')
