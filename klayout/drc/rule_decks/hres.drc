@@ -24,10 +24,11 @@ if FEOL
   logger.info('Starting HRES derivations')
   hres1_poly = poly2.interacting(pplus).interacting(sab).interacting(res_mk)
   hres_poly = hres1_poly.interacting(resistor)
+  hres_resistor = resistor.interacting(hres1_poly)
 
   # Rule HRES.1: Minimum space is 0.4µm. Note: Merge if the spacing is less than 0.4 um.
   logger.info('Executing rule HRES.1')
-  hres1_l1 = resistor.interacting(hres1_poly).space(0.4.um, euclidian)
+  hres1_l1 = hres_resistor.space(0.4.um, euclidian)
   hres1_l1.output('HRES.1', 'HRES.1 : Minimum space: 0.4µm. Note: Merge if the spacing is less than 0.4 um.')
   hres1_l1.forget
 
@@ -55,20 +56,21 @@ if FEOL
 
   # Rule HRES.5: Minimum RESISTOR space to unrelated Poly2 is 0.3µm.
   logger.info('Executing rule HRES.5')
-  hres5_l1 = resistor.interacting(hres1_poly).separation(poly2.not_interacting(sab), 0.3.um, euclidian)
+  hres5_l1 = hres_resistor.separation(poly2.not_interacting(sab), 0.3.um, euclidian)
   hres5_l1.output('HRES.5', 'HRES.5 : Minimum RESISTOR space to unrelated Poly2: 0.3µm')
   hres5_l1.forget
 
   # Rule HRES.6: Minimum RESISTOR space to COMP is  0.3.um.
   logger.info('Executing rule HRES.6')
-  hres6_l1 = resistor.interacting(hres1_poly).separation(comp, 0.3.um, euclidian).polygons(0.001.um)
-  hres6_l2 = comp.not_outside(resistor.interacting(hres1_poly))
+  hres6_l1 = hres_resistor.separation(comp, 0.3.um, euclidian).polygons(0.001.um)
+  hres6_l2 = comp.not_outside(hres_resistor)
   hres6_l = hres6_l1.or(hres6_l2)
   hres6_l.output('HRES.6', 'HRES.6 : Minimum RESISTOR space to COMP: 0.3um')
   hres6_l.forget
   hres6_l1.forget
   hres6_l2.forget
   hres1_poly.forget
+  hres_resistor.forget
 
   # Rule HRES.7: Minimum Pplus overlap of contact on Poly2 resistor is 0.2µm.
   logger.info('Executing rule HRES.7')
