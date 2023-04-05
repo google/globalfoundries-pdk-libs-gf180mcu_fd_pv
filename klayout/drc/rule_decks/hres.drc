@@ -25,6 +25,7 @@ if FEOL
   hres1_poly = poly2.interacting(pplus).interacting(sab).interacting(res_mk)
   hres_poly = hres1_poly.interacting(resistor)
   hres_resistor = resistor.interacting(hres1_poly)
+  hres_contact = contact.and(hres_poly)
 
   # Rule HRES.1: Minimum space is 0.4µm. Note: Merge if the spacing is less than 0.4 um.
   logger.info('Executing rule HRES.1')
@@ -74,8 +75,8 @@ if FEOL
 
   # Rule HRES.7: Minimum Pplus overlap of contact on Poly2 resistor is 0.2µm.
   logger.info('Executing rule HRES.7')
-  hres7_l1 = contact.and(hres_poly).enclosed(pplus, 0.2.um, euclidian).polygons(0.001.um)
-  hres7_l2 = contact.and(hres_poly).not_outside(pplus).not(pplus)
+  hres7_l1 = hres_contact.enclosed(pplus, 0.2.um, euclidian).polygons(0.001.um)
+  hres7_l2 = hres_contact.not_outside(pplus).not(pplus)
   hres7_l  = hres7_l1.or(hres7_l2)
   hres7_l.output('HRES.7', 'HRES.7 : Minimum Pplus overlap of contact on Poly2 resistor: 0.2µm')
   hres7_l1.forget
@@ -84,10 +85,11 @@ if FEOL
 
   # Rule HRES.8: Minimum space from salicide block to contact on Poly2 resistor is 0.22.um.
   logger.info('Executing rule HRES.8')
-  hres8_l1 = contact.and(hres_poly).separation(sab,
-                                               0.22.um).polygons(0.001.um).or(contact.and(hres_poly).interacting(sab))
+  hres8_l1 = hres_contact.separation(sab,
+                                     0.22.um).polygons(0.001.um).or(hres_contact.interacting(sab))
   hres8_l1.output('HRES.8', 'HRES.8 : Minimum space from salicide block to contact on Poly2 resistor: 0.22.um')
   hres8_l1.forget
+  hres_contact.forget
 
   # Rule HRES.9: Minimum salicide block overlap of Poly2 resistor in width direction is 0.28.um.
   logger.info('Executing rule HRES.9')
