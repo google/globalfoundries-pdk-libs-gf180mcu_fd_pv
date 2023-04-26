@@ -115,8 +115,6 @@ def check_klayout_version():
     else:
         klayout_v_list = [int(v) for v in klayout_v_.split(" ")[-1].split(".")]
 
-    logging.info(f"Your Klayout version is: {klayout_v_}")
-
     if len(klayout_v_list) < 1 or len(klayout_v_list) > 3:
         logging.error("Was not able to get klayout version properly.")
         exit(1)
