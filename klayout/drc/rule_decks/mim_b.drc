@@ -24,6 +24,7 @@ if MIM_OPTION == 'B'
   logger.info('Starting MIM Capacitor Option B derivations')
 
   topmin1_metal_fusetop = topmin1_metal.interacting(fusetop)
+  # mimtm_virtual: Used for MIMTM.1,2,3
   mimtm_virtual = fusetop.sized(1.06.um).and(topmin1_metal_fusetop)
 
   # Rule MIMTM.1: Minimum MiM bottom plate spacing to the bottom plate metal
